@@ -6,9 +6,9 @@ Then create a virtual environment in the project directory with `virtualenv venv
 
 Then activate it with `source venv/bin/activate`.
 
-Now run `python` to make sure it's python2.7. If it's not, start again, but create the virtualenv env with `virtualenv -p $PYTHON2PATH venv`.
+Now run `python` to make sure it's python2.7. If it's not, start again, but create the virtualenv env with `virtualenv -p $PYTHON2PATH venv`. Where $PYTHON2PATH is the path to a Python2.7 installation.
 
-If `python` outside of virtualenv if python2.7, you can run `which python` to get the path.
+If `python` outside of virtualenv if python2.7, you can run `which python` to get the path. python2.7 is probably fine also.
 
 Then install dependencies with `pip install -r requirements.txt`
 
