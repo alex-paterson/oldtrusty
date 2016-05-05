@@ -10,7 +10,7 @@ Now run `python` to make sure it's python2.7. If it's not, start again, but crea
 
 If `python` outside of virtualenv if python2.7, you can run `which python` to get the path. python2.7 is probably fine also.
 
-Then install dependencies with `pip install -r requirements.txt`
+Then with the virtualenv activated install dependencies with `pip install -r requirements.txt`
 
 Now you can run `python server.py` and `python client.py` without any missing dependencies.
 
