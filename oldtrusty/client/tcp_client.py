@@ -1,13 +1,23 @@
 import os, socket
 
+FRAME_LENGTH = 1024
+
 
 class Packet:
-    READY_TO_RECEIVE_FILE = '001'
-    FILE = '101'
-    CERTIFICATE = '102'
-    SUCCESSFULLY_SAVED_FILE = '201'
-    SUCCESSFULLY_SAVED_CERTIFICATE = '202'
+    READY_TO_RECEIVE_PART = '000'
+
+    START_OF_FILE = '001'
+    START_OF_CERTIFICATE = '002'
+
+    FILE_PART = '101'
+    CERTIFICATE_PART = '102'
+
+    END_OF_FILE = '351'
+    END_OF_CERTIFICATE = '352'
+
     FILE_ALREADY_EXISTS = '401'
+    FILE_DOESNT_EXIST = '402'
+
     UNRECOGNIZED_HEADER = '999'
 
 
@@ -34,13 +44,28 @@ class TCPClient:
 
     def send_file(self, filename):
         self.__connect()
-        contents = self.__read_file(filename)
-        self.__send_packet(Packet.FILE, contents)
+        self.__start_sending_file(filename)
 
     def send_certificate(self, filename):
         self.__connect()
         contents = self.__read_certificate(filename)
-        self.__send_packet(Packet.CERTIFICATE, contents)
+        resp_header, resp_message = self.__send_packet(Packet.CERTIFICATE, contents)
+
+
+
+    # Internal Loops
+
+    def __start_sending_file(self, filename):
+        f = open(os.path.join(self.__files_path, filename), 'r')
+        resp_packet_type, resp_message = self.__send_packet(Packet.START_OF_FILE, filename)
+        message = f.read(FRAME_LENGTH/8)
+        while resp_packet_type == Packet.READY_TO_RECEIVE_PART and message:
+            resp_packet_type, resp_message = self.__send_packet(Packet.FILE_PART, message)
+            message = f.read(FRAME_LENGTH/8)
+        if resp_packet_type == Packet.READY_TO_RECEIVE_PART:
+            self.__send_packet(Packet.END_OF_FILE)
+
+
 
 
     # Connections and basic communication
@@ -48,40 +73,31 @@ class TCPClient:
     def __connect(self):
         self.__s.connect((self.__host, self.__port))
 
-    def __send_packet(self, packet_type, message):
+    def __send_packet(self, packet_type, message=""):
+        print("- SENDING PACKET {}".format(packet_type))
+        print("{}\n".format(message))
         self.__s.send(self.__add_header(packet_type, message))
-        self.__receive_packet()
+        return self.__receive_packet()
 
     def __receive_packet(self):
-        response = self.__s.recv(1024)
-        header = self.__read_header(response)
-        message = self.__strip_header(response)
-        print("HEADER: {}".format(header))
-        print(message)
+        recv = self.__s.recv(FRAME_LENGTH)
+        header = self.__read_header(recv)
+        message = self.__strip_header(recv)
+        print("+ RECEIVING PACKET {}".format(header))
+        print("{}\n".format(message))
+        return header, message
 
 
     # Packet formatting
+
+    def __split_packet(self, packet):
+        return self.__read_header(packet), self.__strip_header(packet)
 
     def __add_header(self, packet_type, message):
         return packet_type + message
 
     def __strip_header(self, packet):
-        return packet[3:-1]
+        return packet[3:]
 
     def __read_header(self, packet):
         return packet[0:3]
-
-
-    # File I/O
-
-    # Returns file contents
-    def __read_file(self, filename):
-        with open(os.path.join(self.__files_path, filename), 'r') as open_file:
-            contents = open_file.read()
-        return contents
-
-    # Returns certificate contents
-    def __read_certificate(self, filename):
-        with open(os.path.join(self.__certificate_path, filename), 'r') as open_file:
-            contents = open_file.read()
-        return contents
