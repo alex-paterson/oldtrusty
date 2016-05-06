@@ -42,7 +42,7 @@ class TCPServer:
     def __enter_loop(self):
         while True:
             c, addr = self.s.accept()
-            print("$ Connection from {} accepted\n".format(addr))
+            print("\n$ Connection from {} accepted\n".format(addr))
             self.__receive_first_packet_from_connection(c, addr)
 
 
