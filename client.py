@@ -23,3 +23,5 @@ elif args.fetch:
 elif args.certificate:
     filename = args.certificate
     client.send_certificate(filename)
+else:
+    print("run with -h for help")

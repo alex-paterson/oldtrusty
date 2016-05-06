@@ -1,4 +1,4 @@
-# Setup
+# Setup - At this point virtualenv isn't even necessary so ignore this
 
 First install pip with `sudo easy_install pip` on OSX or `sudo apt-get install python-pip python-dev build-essential` on Linux.
 
@@ -24,14 +24,13 @@ Run server
 
 Place files in client/certificates and client/files.
 
-Run commands as such:
+Run as follows:
 
 ```
-client = TCPClient()
-client.send_certificate("cert.txt")
+server = TCPServer()
+server.listen_forever()
 ```
 
 ```
-client = TCPClient()
-client.send_file("file.txt")
+python client.py -h
 ```
