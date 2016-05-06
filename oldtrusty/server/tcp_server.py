@@ -44,7 +44,7 @@ class TCPServer:
     def __enter_loop(self):
         while True:
             c, addr = self.s.accept()
-            print("\n$ Connection from {} accepted\n".format(addr))
+            print("\n\n\n$ Connection from {} accepted\n".format(addr))
             self.__receive_first_packet_from_connection(c, addr)
 
 
@@ -81,9 +81,12 @@ class TCPServer:
         if packet_type == Packet.START_OF_FILE:
             filename = message
             self.__start_receiving_file(c, addr, filename)
-        if packet_type == Packet.START_OF_CERTIFICATE:
+        elif packet_type == Packet.START_OF_CERTIFICATE:
             filename = message
             self.__start_receiving_certificate(c, addr, filename)
+
+            # Unexpected headers. These sould only arrive after entering an
+            # internal loop.
         elif packet_type == Packet.FILE_PART:
             self.__send_packet(c, Packet.UNEXPECTED_HEADER, "Unexpected header {}".format(packet_type), addr)
         elif packet_type == Packet.END_OF_FILE:
@@ -118,24 +121,25 @@ class TCPServer:
         # sends status and message back
         self.__send_packet(c, resp_packet_type, resp_message, addr)
         # if status is ready, then enter loop
-        while resp_packet_type == Packet.READY_TO_RECEIVE_PART:
-            # we start waiting HERE for new packets from the connection
-            recv_packet_type, recv_message = self.__receive_packet(c)
-            # if file part, append
-            if recv_packet_type == Packet.FILE_PART:
-                # calls __append_file which returns a status and message
-                resp_packet_type, resp_message = self.__append_file(filename, recv_message)
-                # sends status and message back
-                self.__send_packet(c, resp_packet_type, resp_message, addr)
-            elif recv_packet_type == Packet.END_OF_FILE:
-                # TODO: Send confirmation?
-                print("File receiving completed. Perhaps do something here")
-                print("$ LEAVE INTERNAL LOOP __start_receiving_file\n")
-                break
-            else:
-                self.__send_packet(c, Packet.UNEXPECTED_HEADER, "Unexpected {}".format(recv_packet_type), addr)
-                print("$ LEAVE INTERNAL LOOP __start_receiving_file\n")
-                break
+        if resp_packet_type == Packet.READY_TO_RECEIVE_PART:
+            while resp_packet_type == Packet.READY_TO_RECEIVE_PART:
+                # we start waiting HERE for new packets from the connection
+                recv_packet_type, recv_message = self.__receive_packet(c)
+                # if file part, append
+                if recv_packet_type == Packet.FILE_PART:
+                    # calls __append_file which returns a status and message
+                    resp_packet_type, resp_message = self.__append_file(filename, recv_message)
+                    # sends status and message back
+                    self.__send_packet(c, resp_packet_type, resp_message, addr)
+                elif recv_packet_type == Packet.END_OF_FILE:
+                    print("$ LEAVE INTERNAL LOOP __start_receiving_file\n")
+                    break
+                else:
+                    self.__send_packet(c, Packet.UNEXPECTED_HEADER, "Unexpected {}".format(recv_packet_type), addr)
+                    print("$ LEAVE INTERNAL LOOP __start_receiving_file\n")
+                    break
+        else:
+            print("$ LEAVE INTERNAL LOOP __start_receiving_file\n")
 
     def __start_receiving_certificate(self, c, addr, filename):
         print("$ ENTER INTERNAL LOOP __start_receiving_certificate\n")
@@ -144,24 +148,25 @@ class TCPServer:
         # sends status and message back
         self.__send_packet(c, resp_packet_type, resp_message, addr)
         # if status is ready, then enter loop
-        while resp_packet_type == Packet.READY_TO_RECEIVE_PART:
-            # we start waiting HERE for new packets from the connection
-            recv_packet_type, recv_message = self.__receive_packet(c)
-            # if file part, append
-            if recv_packet_type == Packet.CERTIFICATE_PART:
-                # calls __append_file which returns a status and message
-                resp_packet_type, resp_message = self.__append_certificate(filename, recv_message)
-                # sends status and message back
-                self.__send_packet(c, resp_packet_type, resp_message, addr)
-            elif recv_packet_type == Packet.END_OF_CERTIFICATE:
-                # TODO: Send confirmation?
-                print("Ceertificate receiving completed. Perhaps do something here")
-                print("$ LEAVE INTERNAL LOOP __start_receiving_certificate\n")
-                break
-            else:
-                self.__send_packet(c, Packet.UNEXPECTED_HEADER, "Unexpected {}".format(recv_packet_type), addr)
-                print("$ LEAVE INTERNAL LOOP __start_receiving_certificate\n")
-                break
+        if resp_packet_type == Packet.READY_TO_RECEIVE_PART:
+            while resp_packet_type == Packet.READY_TO_RECEIVE_PART:
+                # we start waiting HERE for new packets from the connection
+                recv_packet_type, recv_message = self.__receive_packet(c)
+                # if file part, append
+                if recv_packet_type == Packet.CERTIFICATE_PART:
+                    # calls __append_file which returns a status and message
+                    resp_packet_type, resp_message = self.__append_certificate(filename, recv_message)
+                    # sends status and message back
+                    self.__send_packet(c, resp_packet_type, resp_message, addr)
+                elif recv_packet_type == Packet.END_OF_CERTIFICATE:
+                    print("$ LEAVE INTERNAL LOOP __start_receiving_certificate\n")
+                    break
+                else:
+                    self.__send_packet(c, Packet.UNEXPECTED_HEADER, "Unexpected {}".format(recv_packet_type), addr)
+                    print("$ LEAVE INTERNAL LOOP __start_receiving_certificate\n")
+                    break
+        else:
+            print("$ LEAVE INTERNAL LOOP __start_receiving_certificate\n")
 
 
     # Packet formatting
@@ -183,7 +188,7 @@ class TCPServer:
 
     # Creates the file
     def __create_file(self, filename):
-        filepath = os.path.join(self.files_path, filename)
+        filepath = os.path.join(self.__files_path, filename)
         if not os.path.isfile(filepath):
             with open(filepath, 'w+') as open_file:
                 return Packet.READY_TO_RECEIVE_PART, "File successfully created"
@@ -192,7 +197,7 @@ class TCPServer:
 
     # Creates the file
     def __append_file(self, filename, contents):
-        filepath = os.path.join(self.files_path, filename)
+        filepath = os.path.join(self.__files_path, filename)
         if os.path.isfile(filepath):
             with open(filepath, 'a') as open_file:
                 open_file.write(contents)
@@ -200,23 +205,22 @@ class TCPServer:
         else:
             return Packet.FILE_DOESNT_EXIST, "File doesn't exist"
 
-
-    # Creates the file
+    # Creates the cert
     def __create_certificate(self, filename):
         filepath = os.path.join(self.__certificate_path, filename)
         if not os.path.isfile(filepath):
             with open(filepath, 'w+') as open_file:
-                return Packet.READY_TO_RECEIVE_PART, "File successfully created"
+                return Packet.READY_TO_RECEIVE_PART, "Certificate successfully created"
         else:
             return Packet.CERTIFICATE_ALREADY_EXISTS, "Certificate already exists"
 
-    # Creates the file
+    # Creates the cert
     def __append_certificate(self, filename, contents):
         filepath = os.path.join(self.__certificate_path, filename)
         if os.path.isfile(filepath):
             with open(filepath, 'a') as open_file:
                 open_file.write(contents)
-                return Packet.READY_TO_RECEIVE_PART, "File successfully appended"
+                return Packet.READY_TO_RECEIVE_PART, "Certificate successfully appended"
         else:
             return Packet.CERTIFICATE_DOESNT_EXIST, "Certificate doesn't exist"
 

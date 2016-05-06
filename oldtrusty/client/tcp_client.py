@@ -16,10 +16,9 @@ class Packet:
     END_OF_CERTIFICATE = '312'
 
     FILE_ALREADY_EXISTS = '401'
-    FILE_DOESNT_EXIST = '402'
-
-    CERTIFICATE_ALREADY_EXISTS = '401'
-    CERTIFICATE_DOESNT_EXIST = '411'
+    FILE_DOESNT_EXIST = '411'
+    CERTIFICATE_ALREADY_EXISTS = '402'
+    CERTIFICATE_DOESNT_EXIST = '412'
 
     UNRECOGNIZED_HEADER = '500'
     UNEXPECTED_HEADER = '501'
@@ -50,7 +49,6 @@ class TCPClient:
         self.__connect()
         self.__start_sending_file(filename)
 
-    # BADDDDDDDDDDDD
     def send_certificate(self, filename):
         self.__connect()
         self.__start_sending_certificate(filename)
@@ -67,7 +65,7 @@ class TCPClient:
             resp_packet_type, resp_message = self.__send_packet(Packet.FILE_PART, message)
             message = f.read(FRAME_LENGTH/8)
         if resp_packet_type == Packet.READY_TO_RECEIVE_PART:
-            self.__send_packet(Packet.END_OF_FILE, "End of certificate.")
+            self.__send_packet(Packet.END_OF_FILE, "End of file.")
 
     def __start_sending_certificate(self, filename):
         f = open(os.path.join(self.__certificate_path, filename), 'r')
