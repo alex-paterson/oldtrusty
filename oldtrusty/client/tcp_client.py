@@ -65,6 +65,16 @@ class TCPClient:
         if resp_packet_type == Packet.READY_TO_RECEIVE_PART:
             self.__send_packet(Packet.END_OF_FILE)
 
+    def __start_sending_certificate(self, filename):
+        f = open(os.path.join(self.__certificates_path, filename), 'r')
+        resp_packet_type, resp_message = self.__send_packet(Packet.START_OF_CERTIFICATE, filename)
+        message = f.read(FRAME_LENGTH/8)
+        while resp_packet_type == Packet.READY_TO_RECEIVE_PART and message:
+            resp_packet_type, resp_message = self.__send_packet(Packet.CERTIFICATE_PART, message)
+            message = f.read(FRAME_LENGTH/8)
+        if resp_packet_type == Packet.READY_TO_RECEIVE_PART:
+            self.__send_packet(Packet.END_OF_CERTIFICATE)
+
 
 
 
