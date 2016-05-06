@@ -1,3 +1,7 @@
+Right now files are send in packets of 1024 bytes. This is unnecessary, the packets can be as large as they need to be.
+It's still good that the client/server send SOF and EOF packets which communicate whether or not the transfer *will* be valid, then whether or not the transfer *was* successful.
+
+
 # Setup - At this point virtualenv isn't even necessary so ignore this
 
 First install pip with `sudo easy_install pip` on OSX or `sudo apt-get install python-pip python-dev build-essential` on Linux.
@@ -20,16 +24,15 @@ To deactivate the virtualenv run `deactivate`.
 
 # Usage
 
-Run server
+Run server:
+
+```
+python server.py
+```
 
 Place files in client/certificates and client/files.
 
-Run as follows:
-
-```
-server = TCPServer()
-server.listen_forever()
-```
+Run client:
 
 ```
 python client.py -h
