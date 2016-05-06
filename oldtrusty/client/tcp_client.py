@@ -7,18 +7,22 @@ class Packet:
     READY_TO_RECEIVE_PART = '000'
 
     START_OF_FILE = '001'
-    START_OF_CERTIFICATE = '002'
+    START_OF_CERTIFICATE = '011'
 
     FILE_PART = '101'
-    CERTIFICATE_PART = '102'
+    CERTIFICATE_PART = '111'
 
-    END_OF_FILE = '351'
-    END_OF_CERTIFICATE = '352'
+    END_OF_FILE = '301'
+    END_OF_CERTIFICATE = '312'
 
     FILE_ALREADY_EXISTS = '401'
     FILE_DOESNT_EXIST = '402'
 
-    UNRECOGNIZED_HEADER = '999'
+    CERTIFICATE_ALREADY_EXISTS = '401'
+    CERTIFICATE_DOESNT_EXIST = '411'
+
+    UNRECOGNIZED_HEADER = '500'
+    UNEXPECTED_HEADER = '501'
 
 
 class TCPClient:
@@ -46,10 +50,10 @@ class TCPClient:
         self.__connect()
         self.__start_sending_file(filename)
 
+    # BADDDDDDDDDDDD
     def send_certificate(self, filename):
         self.__connect()
-        contents = self.__read_certificate(filename)
-        resp_header, resp_message = self.__send_packet(Packet.CERTIFICATE, contents)
+        self.__start_sending_certificate(filename)
 
 
 
@@ -63,17 +67,17 @@ class TCPClient:
             resp_packet_type, resp_message = self.__send_packet(Packet.FILE_PART, message)
             message = f.read(FRAME_LENGTH/8)
         if resp_packet_type == Packet.READY_TO_RECEIVE_PART:
-            self.__send_packet(Packet.END_OF_FILE)
+            self.__send_packet(Packet.END_OF_FILE, "End of certificate.")
 
     def __start_sending_certificate(self, filename):
-        f = open(os.path.join(self.__certificates_path, filename), 'r')
+        f = open(os.path.join(self.__certificate_path, filename), 'r')
         resp_packet_type, resp_message = self.__send_packet(Packet.START_OF_CERTIFICATE, filename)
         message = f.read(FRAME_LENGTH/8)
         while resp_packet_type == Packet.READY_TO_RECEIVE_PART and message:
             resp_packet_type, resp_message = self.__send_packet(Packet.CERTIFICATE_PART, message)
             message = f.read(FRAME_LENGTH/8)
         if resp_packet_type == Packet.READY_TO_RECEIVE_PART:
-            self.__send_packet(Packet.END_OF_CERTIFICATE)
+            self.__send_packet(Packet.END_OF_CERTIFICATE, "End of certificate.")
 
 
 

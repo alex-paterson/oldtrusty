@@ -7,16 +7,18 @@ class Packet:
     READY_TO_RECEIVE_PART = '000'
 
     START_OF_FILE = '001'
-    START_OF_CERTIFICATE = '002'
+    START_OF_CERTIFICATE = '011'
 
     FILE_PART = '101'
-    CERTIFICATE_PART = '102'
+    CERTIFICATE_PART = '111'
 
-    END_OF_FILE = '351'
-    END_OF_CERTIFICATE = '352'
+    END_OF_FILE = '301'
+    END_OF_CERTIFICATE = '312'
 
     FILE_ALREADY_EXISTS = '401'
-    FILE_DOESNT_EXIST = '402'
+    FILE_DOESNT_EXIST = '411'
+    CERTIFICATE_ALREADY_EXISTS = '402'
+    CERTIFICATE_DOESNT_EXIST = '412'
 
     UNRECOGNIZED_HEADER = '500'
     UNEXPECTED_HEADER = '501'
@@ -25,10 +27,10 @@ class Packet:
 class TCPServer:
 
     def __init__(self, host='127.0.0.1', port=3002):
-        self.host = host
-        self.port = port
-        self.certificate_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'certificates/')
-        self.files_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'files/')
+        self.__host = host
+        self.__port = port
+        self.__certificate_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'certificates/')
+        self.__files_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'files/')
 
 
     # Networking helpers
@@ -36,7 +38,7 @@ class TCPServer:
     def serve_forever(self):
         self.__attempt_to_bind()
         self.s.listen(1)
-        print("$ Listening on {}:{}\n".format(self.host, self.port))
+        print("$ Listening on {}:{}\n".format(self.__host, self.__port))
         self.__enter_loop()
 
     def __enter_loop(self):
@@ -128,10 +130,11 @@ class TCPServer:
             elif recv_packet_type == Packet.END_OF_FILE:
                 # TODO: Send confirmation?
                 print("File receiving completed. Perhaps do something here")
-                print("LEAVE INTERNAL LOOOP")
+                print("$ LEAVE INTERNAL LOOP __start_receiving_file\n")
                 break
             else:
                 self.__send_packet(c, Packet.UNEXPECTED_HEADER, "Unexpected {}".format(recv_packet_type), addr)
+                print("$ LEAVE INTERNAL LOOP __start_receiving_file\n")
                 break
 
     def __start_receiving_certificate(self, c, addr, filename):
@@ -145,18 +148,19 @@ class TCPServer:
             # we start waiting HERE for new packets from the connection
             recv_packet_type, recv_message = self.__receive_packet(c)
             # if file part, append
-            if recv_packet_type == Packet.FILE_PART:
+            if recv_packet_type == Packet.CERTIFICATE_PART:
                 # calls __append_file which returns a status and message
                 resp_packet_type, resp_message = self.__append_certificate(filename, recv_message)
                 # sends status and message back
                 self.__send_packet(c, resp_packet_type, resp_message, addr)
-            elif recv_packet_type == Packet.END_OF_FILE:
+            elif recv_packet_type == Packet.END_OF_CERTIFICATE:
                 # TODO: Send confirmation?
                 print("Ceertificate receiving completed. Perhaps do something here")
-                print("LEAVE INTERNAL LOOOP")
+                print("$ LEAVE INTERNAL LOOP __start_receiving_certificate\n")
                 break
             else:
                 self.__send_packet(c, Packet.UNEXPECTED_HEADER, "Unexpected {}".format(recv_packet_type), addr)
+                print("$ LEAVE INTERNAL LOOP __start_receiving_certificate\n")
                 break
 
 
@@ -199,7 +203,7 @@ class TCPServer:
 
     # Creates the file
     def __create_certificate(self, filename):
-        filepath = os.path.join(self.files_path, filename)
+        filepath = os.path.join(self.__certificate_path, filename)
         if not os.path.isfile(filepath):
             with open(filepath, 'w+') as open_file:
                 return Packet.READY_TO_RECEIVE_PART, "File successfully created"
@@ -208,7 +212,7 @@ class TCPServer:
 
     # Creates the file
     def __append_certificate(self, filename, contents):
-        filepath = os.path.join(self.certificates_path, filename)
+        filepath = os.path.join(self.__certificate_path, filename)
         if os.path.isfile(filepath):
             with open(filepath, 'a') as open_file:
                 open_file.write(contents)
@@ -220,8 +224,8 @@ class TCPServer:
     # Networks
 
     def __attempt_to_bind(self):
-        host = self.host
-        port = self.port
+        host = self.__host
+        port = self.__port
         self.s = socket.socket()
         try:
             self.s.bind((host, port))

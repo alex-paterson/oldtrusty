@@ -5,4 +5,4 @@ from oldtrusty import *
 # print(args)
 
 client = TCPClient()
-client.send_file("meme.txt")
+client.send_certificate("meme.cert")

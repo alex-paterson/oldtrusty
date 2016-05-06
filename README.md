@@ -1,3 +1,5 @@
+# Setup
+
 First install pip with `sudo easy_install pip` on OSX or `sudo apt-get install python-pip python-dev build-essential` on Linux.
 
 The install virtualenv with `sudo pip install --upgrade virtualenv`.
@@ -15,3 +17,21 @@ Then with the virtualenv activated install dependencies with `pip install -r req
 Now you can run `python server.py` and `python client.py` without any missing dependencies.
 
 To deactivate the virtualenv run `deactivate`.
+
+# Usage
+
+Run server
+
+Place files in client/certificates and client/files.
+
+Run commands as such:
+
+```
+client = TCPClient()
+client.send_certificate("cert.txt")
+```
+
+```
+client = TCPClient()
+client.send_file("file.txt")
+```
