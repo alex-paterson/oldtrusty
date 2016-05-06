@@ -2,13 +2,24 @@ import socket
 from oldtrusty import *
 
 args = parse_args()
-client = TCPClient()
-print(args)
-print("")
+# print(args)
+# print("")
+
+if args.host:
+    host_port = args.host.split(":")
+    host = host_port[0]
+    port = host_port[1]
+    client = TCPClient(host, int(port))
+else:
+    client = TCPClient()
+
 
 if args.filename:
     filename = args.filename
     client.send_file(filename)
+elif args.fetch:
+    filename = args.fetch
+    client.request_file(filename)
 elif args.certificate:
     filename = args.certificate
     client.send_certificate(filename)

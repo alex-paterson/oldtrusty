@@ -4,16 +4,19 @@ FRAME_LENGTH = 1024
 
 
 class Packet:
-    READY_TO_RECEIVE_PART = '000'
 
-    START_OF_FILE = '001'
-    START_OF_CERTIFICATE = '011'
+    START_OF_FILE = '000'
+    START_OF_CERTIFICATE = '001'
 
-    FILE_PART = '101'
-    CERTIFICATE_PART = '111'
+    FILE_PART = '010'
+    CERTIFICATE_PART = '011'
 
-    END_OF_FILE = '301'
-    END_OF_CERTIFICATE = '312'
+    END_OF_FILE = '020'
+    END_OF_CERTIFICATE = '021'
+
+    REQUEST_FILE = '030'
+
+    READY_TO_RECEIVE_PART = '200'
 
     FILE_ALREADY_EXISTS = '401'
     FILE_DOESNT_EXIST = '411'
@@ -84,6 +87,9 @@ class TCPServer:
         elif packet_type == Packet.START_OF_CERTIFICATE:
             filename = message
             self.__start_receiving_certificate(c, addr, filename)
+        elif packet_type == Packet.REQUEST_FILE:
+            filename = message
+            self.__start_sending_file(c, addr, filename)
 
             # Unexpected headers. These sould only arrive after entering an
             # internal loop.
@@ -96,21 +102,8 @@ class TCPServer:
         elif packet_type == Packet.END_OF_CERTIFICATE:
             self.__send_packet(c, Packet.UNEXPECTED_HEADER, "Unexpected header {}".format(packet_type), addr)
         else:
-            self.__send_packet(c, Packet.UNRECOGNIZED_HEADER, "Unrecognized header {}".format(packet_type), addr)
-
-    # We pass addr in for future logging
-    def __send_packet(self, c, packet_type, message, addr):
-        print("+ SENDING PACKET {}".format(packet_type))
-        print("{}\n".format(message))
-        c.send(self.__add_header(packet_type, message))
-
-    def __receive_packet(self, c):
-        packet = c.recv(FRAME_LENGTH)
-        recv_header, recv_message =  self.__split_packet(packet)
-        print("- RECEIVING PACKET {}".format(recv_header))
-        print("{}\n".format(recv_message))
-        return recv_header, recv_message
-
+            print("Received unexpected header {}.\n".format(packet_type))
+            # self.__send_packet(c, Packet.UNRECOGNIZED_HEADER, "Unrecognized header {}".format(packet_type), addr)
 
     # Internal Loops
 
@@ -135,7 +128,8 @@ class TCPServer:
                     print("$ LEAVE INTERNAL LOOP __start_receiving_file\n")
                     break
                 else:
-                    self.__send_packet(c, Packet.UNEXPECTED_HEADER, "Unexpected {}".format(recv_packet_type), addr)
+                    print("Received unexpected header {}.\n".format(recv_packet_type))
+                    # self.__send_packet(c, Packet.UNEXPECTED_HEADER, "Unexpected {}".format(recv_packet_type), addr)
                     print("$ LEAVE INTERNAL LOOP __start_receiving_file\n")
                     break
         else:
@@ -162,12 +156,38 @@ class TCPServer:
                     print("$ LEAVE INTERNAL LOOP __start_receiving_certificate\n")
                     break
                 else:
-                    self.__send_packet(c, Packet.UNEXPECTED_HEADER, "Unexpected {}".format(recv_packet_type), addr)
+                    print("Received unexpected header {}.\n".format(recv_packet_type))
+                    # self.__send_packet(c, Packet.UNEXPECTED_HEADER, "Unexpected {}".format(recv_packet_type), addr)
                     print("$ LEAVE INTERNAL LOOP __start_receiving_certificate\n")
                     break
         else:
             print("$ LEAVE INTERNAL LOOP __start_receiving_certificate\n")
 
+    def __start_sending_file(self, c, addr, filename):
+        f = open(os.path.join(self.__files_path, filename), 'r')
+        self.__send_packet(c, Packet.START_OF_FILE, filename, addr)
+        resp_packet_type, resp_message = self.__receive_packet(c)
+        message = f.read(FRAME_LENGTH/8)
+        while resp_packet_type == Packet.READY_TO_RECEIVE_PART and message:
+            self.__send_packet(c, Packet.FILE_PART, message, addr)
+            resp_packet_type, resp_message = self.__receive_packet(c)
+            message = f.read(FRAME_LENGTH/8)
+        if resp_packet_type == Packet.READY_TO_RECEIVE_PART:
+            self.__send_packet(c, Packet.END_OF_FILE, "End of file.", addr)
+
+
+    # We pass addr in for future logging
+    def __send_packet(self, c, packet_type, message, addr):
+        print("+ SENDING PACKET {}".format(packet_type))
+        print("{}\n".format(message))
+        c.send(self.__add_header(packet_type, message))
+
+    def __receive_packet(self, c):
+        packet = c.recv(FRAME_LENGTH)
+        recv_header, recv_message =  self.__split_packet(packet)
+        print("- RECEIVING PACKET {}".format(recv_header))
+        print("{}\n".format(recv_message))
+        return recv_header, recv_message
 
     # Packet formatting
 
