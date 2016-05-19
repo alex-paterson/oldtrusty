@@ -50,13 +50,25 @@ public class TCPClient {
                 }
                 break;
             case download:
-        {
-            try {
-                downloadFile();
-            } catch (IOException ex) {
-                System.out.printf("File download failed\n");
-            }
-        }
+                try {
+                    downloadFile();
+                } catch (IOException ex) {
+                    System.out.printf("File download failed\n");
+                }
+                break;
+            case uploadCertificate:
+                try {
+                    sendCertificate();
+                } catch (IOException ex) {
+                    System.out.printf("File upload failed\n");
+                }
+                break;
+            case listFiles:
+                try {
+                    listFiles();
+                } catch (IOException ex) {
+                    System.out.printf("File upload failed\n");
+                }
                 break;
         }
     }
@@ -108,7 +120,41 @@ public class TCPClient {
         
         BufferedInputStream bufInput = new BufferedInputStream(fis);
         
-        startSendFile();
+        sendPacket(Packet.START_OF_CERTIFICATE, argStruct.uploadFileName);
+        
+        byte[] response = readPacket();
+        int bufLength;
+        
+        while((bufLength = bufInput.read(buf, 0, buf.length)) > 0 && 
+                isOfType(response, Packet.READY_TO_RECEIVE_PART))
+        {
+            System.out.printf("Sending " + argStruct.uploadFileName + "(" + bufLength + " bytes)");
+            
+            writePacket(addHeader(Packet.CERTIFICATE_PART.getBytes(), buf, bufLength));
+            response = readPacket();
+        }
+        
+        if(isOfType(response, Packet.CERTIFICATE_ALREADY_EXISTS))
+            System.out.printf("Certificate already exists on server\n");
+        
+        writePacket(Packet.END_OF_CERTIFICATE.getBytes());
+    }
+    
+    private void sendCertificate() throws IOException
+    {       
+        FileInputStream fis = null;
+        
+        File myFile = new File(argStruct.uploadFileName);
+        byte[] buf = new byte[Packet.FRAME_LENGTH];
+        try {
+            fis = new FileInputStream(myFile);
+        } catch (FileNotFoundException ex) {
+            System.out.printf("Could not find file\n");
+        }
+        
+        BufferedInputStream bufInput = new BufferedInputStream(fis);
+        
+        sendPacket(Packet.START_OF_FILE, argStruct.uploadFileName);
         
         byte[] response = readPacket();
         int bufLength;
@@ -128,21 +174,38 @@ public class TCPClient {
         writePacket(Packet.END_OF_FILE.getBytes());
     }
     
-    private void startSendFile() throws IOException
+    private void listFiles() throws IOException
     {
-        byte[] packet = addHeader(Packet.START_OF_FILE.getBytes(), argStruct.uploadFileName.getBytes(), argStruct.uploadFileName.length());
+        sendPacket(Packet.REQUEST_FILE_LIST, "");
+        
+        byte[] response = readPacket();
+        
+        if(isOfType(response, Packet.LIST_PACKET))
+        {
+            String list = new String(stripHeader(response), java.nio.charset.StandardCharsets.UTF_8);
+            
+            System.out.printf("%s\n", list);
+        }   
+        else
+        {
+           //Error
+        }
+    }
+    
+    private void sendPacket(String header, String message) throws IOException
+    {
+        byte[] packet = addHeader(header.getBytes(), message.getBytes(), message.length());
         
         writePacket(packet);
     }
     
     private void startDownloadFile() throws IOException
     {
-        byte[] packet = addHeader(Packet.REQUEST_FILE.getBytes(), argStruct.downloadFileName.getBytes(), argStruct.downloadFileName.length());
+        sendPacket(Packet.REQUEST_FILE, argStruct.downloadFileName);
         
-        writePacket(packet);
         byte[] response = readPacket();
         
-        if(isOfType(response    , Packet.START_OF_FILE))
+        if(isOfType(response, Packet.START_OF_FILE))
             writePacket(Packet.READY_TO_RECEIVE_PART.getBytes());
         
     }

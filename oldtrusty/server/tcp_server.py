@@ -26,6 +26,9 @@ class Packet:
     UNRECOGNIZED_HEADER = '500'
     UNEXPECTED_HEADER = '501'
 
+    REQUEST_FILE_LIST = '502'
+    LIST_PACKET = '510'
+
 
 class TCPServer:
 
@@ -90,6 +93,8 @@ class TCPServer:
         elif packet_type == Packet.REQUEST_FILE:
             filename = message
             self.__start_sending_file(c, addr, filename)
+	elif packet_type == Packet.REQUEST_FILE_LIST:
+            self.__send_file_list(c, addr)
 
             # Unexpected headers. These sould only arrive after entering an
             # internal loop.
@@ -175,6 +180,12 @@ class TCPServer:
         if resp_packet_type == Packet.READY_TO_RECEIVE_PART:
             self.__send_packet(c, Packet.END_OF_FILE, "End of file.", addr)
 
+    def __send_file_list(self, c, addr):
+	list = os.listdir(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'files/'))
+       
+	# Assume list is less than one packet
+	if len(list) < FRAME_LENGTH:
+            self.__send_packet(c, Packet.LIST_PACKET, ',\n'.join(list), addr)
 
     # We pass addr in for future logging
     def __send_packet(self, c, packet_type, message, addr):
