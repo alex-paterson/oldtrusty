@@ -15,3 +15,13 @@ The server now knows A trusts B, B trusts A.
 now upload a file, get both B to vouch for it using any certificate with its own common name. Get A to do the same. 
 
 Now when someone tries to fetch the file, it will find the circle length ( ie 2 ), and only respond if the length is great enough.
+
+note server must start fresh (ie no existing files)
+note client commands are fickly at the moment
+
+to upload:
+java -jar oldTrustyClient.jar -a meme.txt -h 127.0.0.1:3002 -c 2
+
+vouch for meme.txt, using test.cert:
+java -jar ../../oldTrustyClient/dist/oldTrustyClient.jar -v meme.txt test.cert -h 127.0.0.1:3002 -c 2
+
