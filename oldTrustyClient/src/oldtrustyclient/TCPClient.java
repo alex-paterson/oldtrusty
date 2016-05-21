@@ -70,6 +70,13 @@ public class TCPClient {
                     System.out.printf("File upload failed\n");
                 }
                 break;
+            case vouch:
+                try {
+                    vouchFor();
+                } catch (IOException ex) {
+                    System.out.printf("File upload failed\n");
+                }
+                break;
         }
     }
     
@@ -106,7 +113,7 @@ public class TCPClient {
         file.close();        
     }
     
-    private void sendFile() throws IOException
+    private void sendCertificate() throws IOException
     {       
         FileInputStream fis = null;
         
@@ -137,10 +144,10 @@ public class TCPClient {
         if(isOfType(response, Packet.CERTIFICATE_ALREADY_EXISTS))
             System.out.printf("Certificate already exists on server\n");
         
-        writePacket(Packet.END_OF_CERTIFICATE.getBytes());
+        sendPacket(Packet.END_OF_CERTIFICATE, "");
     }
     
-    private void sendCertificate() throws IOException
+    private void sendFile() throws IOException
     {       
         FileInputStream fis = null;
         
@@ -172,6 +179,15 @@ public class TCPClient {
             System.out.printf("File already exists on server\n");
         
         writePacket(Packet.END_OF_FILE.getBytes());
+    }
+    
+    private void vouchFor() throws IOException
+    {       
+        sendPacket(Packet.VOUCH_FOR_FILE, argStruct.fileToVouch);
+        
+        byte[] response = readPacket();
+        if(isOfType(response, Packet.FILE_SUCCESSFULLY_VOUCHED))
+            System.out.printf("vouched\n");
     }
     
     private void listFiles() throws IOException
