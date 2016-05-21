@@ -28,6 +28,8 @@ public class Packet {
     public static final String VOUCH_FOR_FILE  = "600";
     public static final String FILE_SUCCESSFULLY_VOUCHED = "601";
     
+    public static final String FILE_NOT_VOUCHED = "602";
+    
     public static final int FRAME_LENGTH = 1024;
     public static final int HEADER_LENGTH = 3;
     

@@ -217,13 +217,16 @@ public class TCPClient {
     
     private void startDownloadFile() throws IOException
     {
-        sendPacket(Packet.REQUEST_FILE, argStruct.downloadFileName);
+        //Change later: first byte of string must be circumference length (must be 1 digi)
+        String s = Integer.toString(argStruct.circleCircumference);
+        sendPacket(Packet.REQUEST_FILE,  s.concat(argStruct.downloadFileName));
         
         byte[] response = readPacket();
         
         if(isOfType(response, Packet.START_OF_FILE))
             writePacket(Packet.READY_TO_RECEIVE_PART.getBytes());
-        
+        else if(isOfType(response, Packet.FILE_NOT_VOUCHED))
+            System.out.printf("file not vouched\n");
     }
     
     private void openSocket()

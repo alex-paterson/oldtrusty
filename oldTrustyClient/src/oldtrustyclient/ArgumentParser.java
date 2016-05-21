@@ -124,14 +124,16 @@ public class ArgumentParser {
                 
             //Optional arguments:    
             case 'n':
-                argStruct.namesToInclude.add(args[++index]);                
-                break;
+                argStruct.namesToInclude.add(args[++index]);
+                index++;                
+                break;  
             case 'c':
-                argStruct.circleCircumference = Integer.getInteger(args[++index], -1);
+                argStruct.circleCircumference =  Integer.parseInt(args[++index]);
                 
                 if(argStruct.circleCircumference == -1)
                     throw new IllegalArgumentException("Expected number after: " + args[index-1]);
                 
+                index++;
                 break;
             case 'h':
                 String[] ip = args[++index].split(":", 2);

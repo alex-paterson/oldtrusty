@@ -1,3 +1,4 @@
+from certificate_handler import certificateHandler
 
 # server receivers vouch packet:
 #	
@@ -14,6 +15,7 @@ class fileStructure:
 
 class vouchHandler:
 	def __init__(self):
+		self.__certHandler = certificateHandler()
 		self.__fileList = {}
 	
 	def add_file(self, filename):
@@ -26,6 +28,14 @@ class vouchHandler:
 			print "addr: " + ''.join(str(vouchID)) + " vouched for" + filename
 		else:
 			print "no such file: " + filename
+			
+	def get_circle_length(self, filename):
+		#Once certificates are working:
+		if filename in self.__fileList:
+			vouches = self.__fileList[filename].getVouches()
+			return self.__certHandler.get_length_including(vouches)
+		else:
+			return 0;	
 			
 	def list_vouches(self, filename):
 		if filename in self.__fileList:

@@ -32,6 +32,8 @@ class Packet:
 	
 	VOUCH_FOR_FILE  = '600'
 	FILE_SUCCESSFULLY_VOUCHED  = '601'
+	
+	FILE_NOT_VOUCHED = '602'
 
 
 class TCPServer:	
@@ -96,8 +98,9 @@ class TCPServer:
 			filename = message
 			self.__start_receiving_certificate(c, addr, filename)
 		elif packet_type == Packet.REQUEST_FILE:
-			filename = message
-			self.__start_sending_file(c, addr, filename)
+			desired_circumference = int(message[0])
+			filename = message[1:]
+			self.__start_sending_file(c, addr, filename, desired_circumference)
 		elif packet_type == Packet.REQUEST_FILE_LIST:
 			self.__send_file_list(c, addr)
 		elif packet_type == Packet.VOUCH_FOR_FILE:
@@ -176,17 +179,22 @@ class TCPServer:
 		else:
 			print("$ LEAVE INTERNAL LOOP __start_receiving_certificate\n")
 
-	def __start_sending_file(self, c, addr, filename):
-		f = open(os.path.join(self.__files_path, filename), 'r')
-		self.__send_packet(c, Packet.START_OF_FILE, filename, addr)
-		resp_packet_type, resp_message = self.__receive_packet(c)
-		message = f.read(FRAME_LENGTH/8)
-		while resp_packet_type == Packet.READY_TO_RECEIVE_PART and message:
-			self.__send_packet(c, Packet.FILE_PART, message, addr)
+	def __start_sending_file(self, c, addr, filename, desired_circumference):
+		circum = self.__vouch_handler.get_circle_length(filename)
+		
+		if desired_circumference > circum:
+			self.__send_packet(c, Packet.FILE_NOT_VOUCHED, "", addr)
+		else:
+			f = open(os.path.join(self.__files_path, filename), 'r')
+			self.__send_packet(c, Packet.START_OF_FILE, filename, addr)
 			resp_packet_type, resp_message = self.__receive_packet(c)
 			message = f.read(FRAME_LENGTH/8)
-		if resp_packet_type == Packet.READY_TO_RECEIVE_PART:
-			self.__send_packet(c, Packet.END_OF_FILE, "End of file.", addr)
+			while resp_packet_type == Packet.READY_TO_RECEIVE_PART and message:
+				self.__send_packet(c, Packet.FILE_PART, message, addr)
+				resp_packet_type, resp_message = self.__receive_packet(c)
+				message = f.read(FRAME_LENGTH/8)
+			if resp_packet_type == Packet.READY_TO_RECEIVE_PART:
+				self.__send_packet(c, Packet.END_OF_FILE, "End of file.", addr)
 
 	def __handle_vouch(self, c, addr, filename):
 		self.__send_packet(c, Packet.FILE_SUCCESSFULLY_VOUCHED, "", addr)
