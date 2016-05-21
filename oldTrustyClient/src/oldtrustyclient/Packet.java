@@ -26,6 +26,8 @@ public class Packet {
     public static final String LIST_PACKET  = "510";
     
     public static final String VOUCH_FOR_FILE  = "600";
+    public static final String VOUCH_USING_CERT  = "612";
+    public static final String READY_TO_RECEIVE_CERTIFICATE  = "611";
     public static final String FILE_SUCCESSFULLY_VOUCHED = "601";
     
     public static final String FILE_NOT_VOUCHED = "602";

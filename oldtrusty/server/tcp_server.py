@@ -31,8 +31,10 @@ class Packet:
 	LIST_PACKET = '510'
 	
 	VOUCH_FOR_FILE  = '600'
-	FILE_SUCCESSFULLY_VOUCHED  = '601'
+	VOUCH_USING_CERT  = '612'
+	READY_TO_RECEIVE_CERTIFICATE  = '611'
 	
+	FILE_SUCCESSFULLY_VOUCHED  = '601'
 	FILE_NOT_VOUCHED = '602'
 
 
@@ -197,8 +199,14 @@ class TCPServer:
 				self.__send_packet(c, Packet.END_OF_FILE, "End of file.", addr)
 
 	def __handle_vouch(self, c, addr, filename):
-		self.__send_packet(c, Packet.FILE_SUCCESSFULLY_VOUCHED, "", addr)
-		self.__vouch_handler.add_vouch(filename, addr)
+		# Get certificate:
+		self.__send_packet(c, Packet.READY_TO_RECEIVE_CERTIFICATE, "", addr)
+		
+		recv_packet_type, certificate = self.__receive_packet(c)
+		if recv_packet_type == Packet.VOUCH_USING_CERT:
+			self.__vouch_handler.add_vouch(filename, certificate)
+			
+			self.__send_packet(c, Packet.FILE_SUCCESSFULLY_VOUCHED, "", addr)
 		
 	def __send_file_list(self, c, addr):
 		listDir = os.listdir(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'files/'))

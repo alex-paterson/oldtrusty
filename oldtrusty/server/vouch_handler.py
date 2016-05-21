@@ -21,16 +21,20 @@ class vouchHandler:
 	def add_file(self, filename):
 		self.__fileList[filename] = fileStructure()
 	
-	# For now just use addr as vouchID
-	def add_vouch(self, filename, vouchID):
+	# For now just use common name as ID
+	def add_vouch(self, filename, certificate):
 		if filename in self.__fileList:
-			self.__fileList[filename].addVouch(''.join(str(vouchID)))
-			print "addr: " + ''.join(str(vouchID)) + " vouched for" + filename
+			name = self.__certHandler.get_certificate_subject(certificate)
+			
+			print name
+			
+			self.__fileList[filename].addVouch(name)
+			print "addr: " + str(name) + " vouched for" + filename
 		else:
 			print "no such file: " + filename
 			
 	def get_circle_length(self, filename):
-		#Once certificates are working:
+		# Once certificates are working:
 		if filename in self.__fileList:
 			vouches = self.__fileList[filename].getVouches()
 			return self.__certHandler.get_length_including(vouches)

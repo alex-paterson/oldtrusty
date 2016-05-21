@@ -123,6 +123,7 @@ public class TCPClient {
             fis = new FileInputStream(myFile);
         } catch (FileNotFoundException ex) {
             System.out.printf("Could not find file\n");
+            return;
         }
         
         BufferedInputStream bufInput = new BufferedInputStream(fis);
@@ -183,9 +184,30 @@ public class TCPClient {
     
     private void vouchFor() throws IOException
     {       
-        sendPacket(Packet.VOUCH_FOR_FILE, argStruct.fileToVouch);
+        FileInputStream fis = null;
+        File myFile = new File(argStruct.uploadFileName);
+        byte[] buf = new byte[Packet.FRAME_LENGTH];
+        try {
+            fis = new FileInputStream(myFile);
+        } catch (FileNotFoundException ex) {
+            System.out.printf("Could not find certificate\n");
+            return;
+        }
+        BufferedInputStream bufInput = new BufferedInputStream(fis);
+        int bufLength = bufInput.read(buf, 0, buf.length);
         
+        
+        sendPacket(Packet.VOUCH_FOR_FILE, argStruct.fileToVouch);
         byte[] response = readPacket();
+        
+        if(isOfType(response, Packet.READY_TO_RECEIVE_CERTIFICATE))
+        {
+            System.out.printf("Sending " + argStruct.uploadFileName + "(" + bufLength + " bytes)");
+            
+            writePacket(addHeader(Packet.VOUCH_USING_CERT.getBytes(), buf, bufLength));
+            response = readPacket();
+        }
+        
         if(isOfType(response, Packet.FILE_SUCCESSFULLY_VOUCHED))
             System.out.printf("vouched\n");
     }
