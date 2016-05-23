@@ -10,21 +10,21 @@ It's still good that the client/server send SOF and EOF packets which communicat
 
 to sign a CSR with specified private key, certificate
 
-'''
+```
 openssl x509 -CAkey test.key -CA test.cert -in 1.csr -req -out 1.crt -CAcreateserial
-'''
+```
 
 to generate new private key, certificate:
 
-'''
+```
 openssl req -new -newkey rsa:1024 -days 365 -nodes -x509 -keyout test.key -out test.cert
-'''
+```
 
 To generate CSR:
 
-'''
+```
 openssl req -new -sha256 -key test.key -out 2.csr
-'''
+```
 
 to display who signed the certificate:
 
@@ -57,15 +57,15 @@ note client commands are fickly at the moment
 
 to upload:
 
-'''
+```
 java -jar oldTrustyClient.jar -a meme.txt -h 127.0.0.1:3002 -c 2
-'''
+```
 
 vouch for meme.txt, using test.cert:
 
-'''
+```
 java -jar ../../oldTrustyClient/dist/oldTrustyClient.jar -v meme.txt test.cert -h 127.0.0.1:3002 -c 2
-'''
+```
 
 # Server
 
