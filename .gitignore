@@ -1,3 +1,9 @@
 venv/
-venv/*
+
 *.pyc
+**/*.pyc
+
+.DS_STORE
+**/.DS_STORE
+
+client/nbproject/private/

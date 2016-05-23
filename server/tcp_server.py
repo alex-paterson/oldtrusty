@@ -1,5 +1,5 @@
 import sys, shlex, socket, subprocess, atexit, os
-from vouch_handler import vouchHandler
+from vouch_handler import VouchHandler
 
 FRAME_LENGTH = 1024
 
@@ -29,23 +29,23 @@ class Packet:
 
 	REQUEST_FILE_LIST = '502'
 	LIST_PACKET = '510'
-	
+
 	VOUCH_FOR_FILE  = '600'
 	VOUCH_USING_CERT  = '612'
 	READY_TO_RECEIVE_CERTIFICATE  = '611'
-	
+
 	FILE_SUCCESSFULLY_VOUCHED  = '601'
 	FILE_NOT_VOUCHED = '602'
 
 
-class TCPServer:	
+class TCPServer:
 
 	def __init__(self, host='127.0.0.1', port=3002):
 		self.__host = host
 		self.__port = port
 		self.__certificate_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'certificates/')
 		self.__files_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'files/')
-		self.__vouch_handler = vouchHandler()
+		self.__vouch_handler = VouchHandler()
 
 
 	# Networking helpers
@@ -183,7 +183,7 @@ class TCPServer:
 
 	def __start_sending_file(self, c, addr, filename, desired_circumference):
 		circum = self.__vouch_handler.get_circle_length(filename)
-		
+
 		if desired_circumference > circum:
 			self.__send_packet(c, Packet.FILE_NOT_VOUCHED, "", addr)
 		else:
@@ -201,22 +201,22 @@ class TCPServer:
 	def __handle_vouch(self, c, addr, filename):
 		# Get certificate:
 		self.__send_packet(c, Packet.READY_TO_RECEIVE_CERTIFICATE, "", addr)
-		
+
 		recv_packet_type, certificate = self.__receive_packet(c)
 		if recv_packet_type == Packet.VOUCH_USING_CERT:
 			self.__vouch_handler.add_vouch(filename, certificate)
-			
+
 			self.__send_packet(c, Packet.FILE_SUCCESSFULLY_VOUCHED, "", addr)
-		
+
 	def __send_file_list(self, c, addr):
 		listDir = os.listdir(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'files/'))
 		# Assume list is less than one packet
 		out = "Files:\n"
-		
+
 		for filename in listDir:
 			out = out + "Filename: \n" + filename
 			out = out + "\nVouched by: \n" + self.__vouch_handler.list_vouches(filename)
-		
+
 		if len(out) < FRAME_LENGTH:
 			self.__send_packet(c, Packet.LIST_PACKET, out, addr)
 
