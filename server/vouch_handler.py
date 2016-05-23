@@ -1,15 +1,6 @@
-from certificate_handler import CertificateHandler
+from .certificate_handler import CertificateHandler
+from .file import File
 
-
-class FileStructure:
-	def __init__(self):
-		self.__vouchIDList = []
-
-	def addVouch(self, ID):
-		self.__vouchIDList.append(ID)
-
-	def getVouches(self):
-		return self.__vouchIDList
 
 class VouchHandler:
 	def __init__(self):
@@ -17,7 +8,7 @@ class VouchHandler:
 		self.__fileList = {}
 
 	def add_file(self, filename):
-		self.__fileList[filename] = fileStructure()
+		self.__fileList[filename] = File()
 
 	# For now just use common name as ID
 	def add_vouch(self, filename, certificate):

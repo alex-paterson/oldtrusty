@@ -1,15 +1,16 @@
 from OpenSSL import crypto
 import os
 
+
 class CertificateHandler:
 	def __init__(self):
-		self.__certificate_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'certificates/')
+		self.__certificate_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'db/certificates/')
 		self.__trust_list = {}
 		self.__load_certificates()
 
 	def __load_certificates(self):
 		for file in os.listdir(self.__certificate_path):
-			print(file)
+			print "CERTIFICATE:", file
 			self.__load(self.__certificate_path + file)
 
 	def __load(self, filename):
@@ -22,7 +23,7 @@ class CertificateHandler:
 		self.__add_trust(subject, issuer)
 
 	def __add_trust(self, subject, trustedBy):
-		print subject, "trusted by ", trustedBy
+		print subject, "trusted by", trustedBy
 
 		if subject in self.__trust_list:
 			self.__trust_list[subject].append(trustedBy)

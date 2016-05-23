@@ -28,7 +28,9 @@ openssl req -new -sha256 -key test.key -out 2.csr
 
 to display who signed the certificate:
 
+```
 openssl x509 -text -noout -in 1.crt
+```
 
 ie server will loop through all certificates, see who signed whos
 
