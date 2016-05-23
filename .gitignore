@@ -7,3 +7,7 @@ venv/
 **/.DS_STORE
 
 client/nbproject/private/
+
+.old_code/
+
+cert/
