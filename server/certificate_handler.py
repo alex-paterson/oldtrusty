@@ -3,8 +3,8 @@ import os
 
 
 class CertificateHandler:
-	def __init__(self):
-		self.__certificate_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'db/certificates/')
+	def __init__(self, certificate_path):
+		self.__certificate_path = certificate_path
 		self.__trust_list = {}
 		self.__load_certificates()
 
@@ -34,10 +34,10 @@ class CertificateHandler:
 		start = vouchList[0]
 		print "Checking vouches, starting at", start
 
-		test = self.__check_who_trusts(start, start, [], vouchList, 0, 0)
+		length, visited = self.__check_who_trusts(start, start, [], vouchList, 0, 0)
 
-		print "length ", test
-		return test
+		print "length ", length
+		return length
 
 	def __check_who_trusts(self, start, current, visited_list, vouchList, counter, max_length_so_far):
 		new_counter = counter + 1
@@ -51,9 +51,9 @@ class CertificateHandler:
 					if new_counter > max_length_so_far:
 						max_length_so_far = new_counter
 				elif (user not in visited_list) and (user in vouchList):
-					max_length_so_far = self.__check_who_trusts(start, user, visited_list, vouchList, new_counter, max_length_so_far)
+					max_length_so_far, visited_list = self.__check_who_trusts(start, user, visited_list, vouchList, new_counter, max_length_so_far)
 
-		return max_length_so_far
+		return max_length_so_far, visited_list
 
 	def __ID(self, name):
 		return name.CN

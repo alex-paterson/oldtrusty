@@ -1,11 +1,21 @@
+import os
 from .certificate_handler import CertificateHandler
 from .file import File
 
 
 class VouchHandler:
-	def __init__(self):
-		self.__certHandler = CertificateHandler()
+	def __init__(self, file_path, certificate_path):
+		self.__certHandler = CertificateHandler(certificate_path)
+		self.__files_path = file_path
 		self.__fileList = {}
+		self.__add_existing_files()
+
+	def __add_existing_files(self):
+		listDir = os.listdir(self.__files_path)
+
+		for filename in listDir:
+			print "Adding file: ", filename
+			self.add_file(filename)
 
 	def add_file(self, filename):
 		self.__fileList[filename] = File()
@@ -18,7 +28,7 @@ class VouchHandler:
 			print name
 
 			self.__fileList[filename].addVouch(name)
-			print "addr: " + str(name) + " vouched for" + filename
+			print str(name) + " vouched for" + filename
 		else:
 			print "no such file: " + filename
 

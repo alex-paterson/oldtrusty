@@ -13,6 +13,7 @@ public class Packet {
     public static final String START_OF_FILE = "000";
     public static final String REQUEST_FILE  = "030";
     public static final String START_OF_CERTIFICATE = "001";
+    
     public static final String FILE_PART  = "010";
     public static final String READY_TO_RECEIVE_PART  = "200";
     
@@ -32,6 +33,7 @@ public class Packet {
     
     public static final String FILE_NOT_VOUCHED = "602";
     
+    public static final int MAX_NAME_LENGTH = 32;
     public static final int FRAME_LENGTH = 1024;
     public static final int HEADER_LENGTH = 3;
     

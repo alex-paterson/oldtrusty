@@ -5,7 +5,7 @@
  */
 package oldtrustyclient;
 import java.io.IOException;
-import oldtrustyclient.ArgumentParser.*;
+import oldtrustyclient.ArgParser.*;
 import java.net.Socket;
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -26,12 +26,12 @@ public class TCPClient {
     
     
     
-    private Arguments argStruct;
+    private ArgumentStruct argStruct;
     private Socket socket;        
     private InputStream is;
     private OutputStream os;
     
-    public TCPClient(Arguments argStruct)
+    public TCPClient(ArgumentStruct argStruct)
     {
         this.argStruct = argStruct;
         
@@ -237,18 +237,50 @@ public class TCPClient {
         writePacket(packet);
     }
     
+    private void sendPacket(String header, byte[] message) throws IOException
+    {
+        byte[] packet = addHeader(header.getBytes(), message, message.length);
+        
+        writePacket(packet);
+    }
+    
     private void startDownloadFile() throws IOException
     {
-        //Change later: first byte of string must be circumference length (must be 1 digi)
-        String s = Integer.toString(argStruct.circleCircumference);
-        sendPacket(Packet.REQUEST_FILE,  s.concat(argStruct.downloadFileName));
+        sendPacket(Packet.REQUEST_FILE,  constructDownloadPacket());
         
         byte[] response = readPacket();
         
         if(isOfType(response, Packet.START_OF_FILE))
             writePacket(Packet.READY_TO_RECEIVE_PART.getBytes());
-        else if(isOfType(response, Packet.FILE_NOT_VOUCHED))
+        else if(isOfType(response, Packet.FILE_NOT_VOUCHED))    
             System.out.printf("file not vouched\n");
+    }
+    
+    /*
+    Format for requesting files:
+    Header.
+    1 byte circumference length
+    1 byte number of names
+    MAX_NAME_LENGTH bytes per name    
+    MAX_NAME_LENGTH byte for filename
+    */
+    private byte[] constructDownloadPacket()
+    {
+        int numNames = argStruct.namesToInclude.size();
+        if(numNames > 10)
+        {
+            System.out.printf("To many names\n");
+            return new byte[1];
+        }
+        
+        byte[] buf = new byte[2 + argStruct.namesToInclude.size()*Packet.MAX_NAME_LENGTH + Packet.MAX_NAME_LENGTH];
+        buf[0] = argStruct.circleCircumference;
+        buf[1] = (byte) numNames;
+        for(int i = 0; i < numNames; i++)
+            System.arraycopy(argStruct.namesToInclude.get(i).getBytes(), 0, buf, i*Packet.MAX_NAME_LENGTH + 2, Packet.MAX_NAME_LENGTH);
+        
+        System.arraycopy(argStruct.downloadFileName.getBytes(), 0, buf, numNames*Packet.MAX_NAME_LENGTH + 2, Packet.MAX_NAME_LENGTH);
+        return buf;
     }
     
     private void openSocket()

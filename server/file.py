@@ -4,7 +4,8 @@ class File:
 		self.__vouchIDList = []
 
 	def addVouch(self, ID):
-		self.__vouchIDList.append(ID)
+		if ID not in self.__vouchIDList:
+			self.__vouchIDList.append(ID)
 
 	def getVouches(self):
 		return self.__vouchIDList

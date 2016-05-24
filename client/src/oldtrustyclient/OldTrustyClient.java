@@ -6,6 +6,7 @@
 package oldtrustyclient;
 
 import java.net.UnknownHostException;
+import net.sourceforge.argparse4j.inf.ArgumentParserException;
 
 /**
  *
@@ -16,9 +17,9 @@ public class OldTrustyClient {
     /**
      * @param args the command line arguments
      */
-    public static void main(String[] args) throws UnknownHostException {
-        ArgumentParser argParser = new ArgumentParser();
-        ArgumentParser.Arguments argStruct = argParser.parse(args);
+    public static void main(String[] args) throws UnknownHostException, ArgumentParserException {
+        ArgParser argParser = new ArgParser();
+        ArgParser.ArgumentStruct argStruct = argParser.parse(args);
         
         System.out.printf("Go\n");
         
