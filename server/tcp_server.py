@@ -247,15 +247,15 @@ class TCPServer:
         if num_names == 0:
             names = ""
         else:
-            a = 2 + i*Packet.MAX_NAME_LENGTH
-            b = 2 + (i+1)*Packet.MAX_NAME_LENGTH
+            a = 2 + Packet.MAX_NAME_LENGTH
+            b = 2 + 2*Packet.MAX_NAME_LENGTH
             s = message[ a : b ]
             names = s
         filename = message[2+num_names*Packet.MAX_NAME_LENGTH:]
         filename = self.__fix_filename(filename)
         return desired_circumference, names, filename
-       
-    # Shrinks the filename found in packet down to letters only (could be done better)    
+
+    # Shrinks the filename found in packet down to letters only (could be done better)
     def __fix_filename(self, filename):
         counter = 0
         for letter in filename:
