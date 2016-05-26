@@ -36,8 +36,7 @@ class VouchHandler:
         return filename in self.__fileList  
 
     def get_circle_length(self, filename, name_to_include):
-        # Once certificates are working:
-        if filename in self.__fileList:
+        if self.does_file_exist(filename):
             vouches = self.__fileList[filename].getVouches()
             return self.__certHandler.get_length_including(vouches, name_to_include)
         else:

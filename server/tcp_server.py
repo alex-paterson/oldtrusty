@@ -176,19 +176,14 @@ class TCPServer:
             print("$ LEAVE INTERNAL LOOP __start_receiving_certificate\n")
 
     def __send_file(self, c, addr, message):
-        desired_circumference, names, filename = self.__interpret_file_request(message)
+        desired_circumference, name, filename = self.__interpret_file_request(message)
 
         if not self.__vouch_handler.does_file_exist(filename):
             print "File not found: ", filename
             self.__send_packet(c, Packet.FILE_DOESNT_EXIST, filename, addr)
             return
 
-        #TODO:
-        #TODO:
-        #TODO: Vouch handler needs a get_circle_length method that takes multiple names
-        #TODO:
-        #TODO:
-        circum = self.__vouch_handler.get_circle_length(filename, names[0] if names else [""])
+        circum = self.__vouch_handler.get_circle_length(filename, name)
 
         if desired_circumference > circum:
             self.__send_packet(c, Packet.FILE_NOT_VOUCHED,
@@ -249,15 +244,25 @@ class TCPServer:
     def __interpret_file_request(self, message):
         desired_circumference = ord(message[0])
         num_names = ord(message[1])
-        names = ""
-        for i in range(0, num_names):
-            a = 2 + i*Packet.MAX_NAME_LENGTH
+        if num_names == 0:
+			names = ""
+		else:
+			a = 2 + i*Packet.MAX_NAME_LENGTH
             b = 2 + (i+1)*Packet.MAX_NAME_LENGTH
             s = message[ a : b ]
             names = s
         filename = message[2+num_names*Packet.MAX_NAME_LENGTH:]
         filename = self.__fix_filename(filename)
         return desired_circumference, names, filename
+       
+    # Shrinks the filename found in packet down to letters only (could be done better)    
+    def __fix_filename(self, filename):
+        counter = 0
+        for letter in filename:
+            if not (letter.isalpha() or letter == '.' or letter == '_' or letter == '-'):
+                return filename[0:counter]
+            counter = counter + 1
+        return filename
 
     def __add_header(self, packet_type, message):
         if not message:
@@ -343,13 +348,6 @@ class TCPServer:
 
     # File I/O
 
-    def __fix_filename(self, filename):
-        counter = 0
-        for letter in filename:
-            if not (letter.isalpha() or letter == '.' or letter == '_' or letter == '-'):
-                return filename[0:counter]
-            counter = counter + 1
-        return filename
 
     # Returns file contents
     def __read_file(self, filename):
