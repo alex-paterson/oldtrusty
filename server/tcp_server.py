@@ -40,7 +40,7 @@ class Packet:
 
     FILE_SUCCESSFULLY_VOUCHED  = '601'
     FILE_NOT_VOUCHED = '602'
-    
+
     MAX_NAME_LENGTH = 32
 
 
@@ -175,9 +175,13 @@ class TCPServer:
         else:
             print("$ LEAVE INTERNAL LOOP __start_receiving_certificate\n")
 
-<<<<<<< HEAD
     def __send_file(self, c, addr, message):
         desired_circumference, names, filename = self.__interpret_file_request_header(message)
+
+        if not self.__vouch_handler.does_file_exist(filename):
+            print "File not found: ", filename
+            self.__send_packet(c, Packet.FILE_DOESNT_EXIST, filename, addr)
+            return
 
         circum = self.__vouch_handler.get_circle_length(filename)
 
@@ -205,38 +209,10 @@ class TCPServer:
         for filename in listDir:
             out = out + "Filename: \n" + filename
             out = out + "\nVouched by: \n" + self.__vouch_handler.list_vouches(filename)
+            out = out + "Length of: " + str(self.__vouch_handler.get_circle_length(filename, ""))
 
         self.__send_packet(c, Packet.FILE_LIST, out, addr)
-=======
-	def __send_file(self, c, addr, message):
-		desired_circumference, names, filename = self.__interpret_header(message)
-		
-		if not self.__vouch_handler.does_file_exist(filename):
-			print "File not found: ", filename
-			self.__send_packet(c, Packet.FILE_DOESNT_EXIST, filename, addr)
-			return
-		
-		circum = self.__vouch_handler.get_circle_length(filename, names)
 
-		if desired_circumference > circum:
-			self.__send_packet(c, Packet.FILE_NOT_VOUCHED,
-							   "Only {} people have vouched for this file.".format(circum), addr)
-		else:
-			message = open(os.path.join(self.__files_path, filename), 'r').read()
-			self.__send_packet(c, Packet.FILE_CONTENT, message, addr)
-
-	def __send_file_list(self, c, addr):
-		listDir = os.listdir(self.__files_path)
-		# Assume list is less than one packet
-		out = "Files:\n"
-
-		for filename in listDir:
-			out = out + "Filename: \n" + filename
-			out = out + "\nVouched by: \n" + self.__vouch_handler.list_vouches(filename)
-			out = out + "Length of: " + str(self.__vouch_handler.get_circle_length(filename, ""))
-
-		self.__send_packet(c, Packet.FILE_LIST, out, addr)
->>>>>>> b21dff46caa948c6093c68c8eb19d176fb2e6254
 
     def __handle_vouch(self, c, addr, filename):
         # Get certificate:
@@ -270,11 +246,11 @@ class TCPServer:
     def __interpret_file_request_header(self, message):
         desired_circumference = ord(message[0])
         num_names = ord(message[1])
-        names = []
+        names = ""
         for i in range(0, num_names):
-            s = message[2 + i*Packet.MAX_NAME_LENGTH:1 + (i+2)*Packet.MAX_NAME_LENGTH]
-            names.append(s)
-        filename = message[2+num_names*Packet.MAX_NAME_LENGTH:]
+            s = message[2 + i*Packet.MAX_NAME_LENGTH:1 + (i+1)*Packet.MAX_NAME_LENGTH]
+            names = s
+        filename = self.__fix_filename(message[2+num_names*Packet.MAX_NAME_LENGTH:])
         return desired_circumference, names, filename
 
     def __add_header(self, packet_type, message):
@@ -357,27 +333,13 @@ class TCPServer:
 
 
     # File I/O
-<<<<<<< HEAD
-=======
-	
-	def __fix_filename(self, filename):
-		counter = 0
-		for letter in filename:
-			if not (letter.isalpha() or letter == '.' or letter == '_' or letter == '-'):
-				return filename[0:counter]
-			counter = counter + 1
-	
-	# decrypts the request file header
-	def __interpret_header(self, message):
-		desired_circumference = ord(message[0])
-		num_names = ord(message[1])
-		names = ""
-		for i in range(0, num_names):
-			s = message[2 + i*Packet.MAX_NAME_LENGTH:1 + (i+1)*Packet.MAX_NAME_LENGTH]
-			names = s
-		filename = self.__fix_filename(message[2+num_names*Packet.MAX_NAME_LENGTH:])
-		return desired_circumference, names, filename
->>>>>>> b21dff46caa948c6093c68c8eb19d176fb2e6254
+
+    def __fix_filename(self, filename):
+        counter = 0
+        for letter in filename:
+            if not (letter.isalpha() or letter == '.' or letter == '_' or letter == '-'):
+                return filename[0:counter]
+            counter = counter + 1
 
     # Returns file contents
     def __read_file(self, filename):
