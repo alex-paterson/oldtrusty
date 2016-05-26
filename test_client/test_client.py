@@ -6,7 +6,9 @@ port = 3002
 s = socket.socket()
 s.connect((host,port))
 
-message = raw_input("->")
+# message = raw_input("->")
+
+message = "030" + chr(0) + chr(0) + "meme.txt"
 while message != 'q':
 	s.send(message)
 	data = s.recv(1024)

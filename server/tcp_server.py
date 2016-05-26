@@ -176,7 +176,7 @@ class TCPServer:
             print("$ LEAVE INTERNAL LOOP __start_receiving_certificate\n")
 
     def __send_file(self, c, addr, message):
-        desired_circumference, names, filename = self.__interpret_file_request_header(message)
+        desired_circumference, names, filename = self.__interpret_file_request(message)
 
         if not self.__vouch_handler.does_file_exist(filename):
             print "File not found: ", filename
@@ -185,13 +185,11 @@ class TCPServer:
 
         circum = self.__vouch_handler.get_circle_length(filename)
 
-
         if desired_circumference > circum:
             self.__send_packet(c, Packet.FILE_NOT_VOUCHED,
                                "Only {} people have vouched for this file.".format(circum), addr)
         else:
             file_content = open(os.path.join(self.__files_path, filename), 'r').read()
-            #TODO: Handle bad file
             file_content_length = chr(len(file_content))
             # Send START_OF_FILE
             self.__send_packet(c, Packet.START_OF_FILE, file_content_length, addr)
@@ -243,18 +241,24 @@ class TCPServer:
         return self.__read_header(packet), self.__strip_header(packet)
 
     # decrypts the request file header
-    def __interpret_file_request_header(self, message):
+    def __interpret_file_request(self, message):
         desired_circumference = ord(message[0])
         num_names = ord(message[1])
         names = ""
         for i in range(0, num_names):
-            s = message[2 + i*Packet.MAX_NAME_LENGTH:1 + (i+1)*Packet.MAX_NAME_LENGTH]
+            a = 2 + i*Packet.MAX_NAME_LENGTH
+            b = 2 + (i+1)*Packet.MAX_NAME_LENGTH
+            s = message[ a : b ]
             names = s
-        filename = self.__fix_filename(message[2+num_names*Packet.MAX_NAME_LENGTH:])
+        filename = message[2+num_names*Packet.MAX_NAME_LENGTH:]
+        filename = self.__fix_filename(filename)
         return desired_circumference, names, filename
 
     def __add_header(self, packet_type, message):
-        return packet_type + message
+        if not message:
+            return packet_type
+        else:
+            return packet_type + message
 
     def __strip_header(self, packet):
         return packet[3:]
@@ -340,6 +344,7 @@ class TCPServer:
             if not (letter.isalpha() or letter == '.' or letter == '_' or letter == '-'):
                 return filename[0:counter]
             counter = counter + 1
+        return filename
 
     # Returns file contents
     def __read_file(self, filename):
