@@ -30,28 +30,36 @@ class CertificateHandler:
 		else:
 			self.__trust_list[subject] = [trustedBy]
 
-	def get_length_including(self, vouchList):
+	def get_length_including(self, vouchList, name_to_include):
+		if len(vouchList) == 0:
+			return 0
 		start = vouchList[0]
-		print "Checking vouches, starting at", start
+		print "Checking vouches, including - ", name_to_include, "- starting at", start
 
-		length, visited = self.__check_who_trusts(start, start, [], vouchList, 0, 0)
+		if len(name_to_include) == 0:
+			if_named = True
+		else:
+			if_named = False
+		length, visited = self.__check_who_trusts(start, start, [], vouchList, name_to_include, if_named, 0, 0)
 
 		print "length ", length
 		return length
 
-	def __check_who_trusts(self, start, current, visited_list, vouchList, counter, max_length_so_far):
+	def __check_who_trusts(self, start, current, visited_list, vouchList, name_to_include, if_named_already, counter, max_length_so_far):
 		new_counter = counter + 1
 		visited_list.append(current)
 
 		print "visiting: ", current, max_length_so_far
 
 		if current in self.__trust_list:
-			for user in self.__trust_list[current]:
+			for user in self.__trust_list[current]:		
 				if user == start:
-					if new_counter > max_length_so_far:
+					if (new_counter > max_length_so_far) and (if_named_already):
 						max_length_so_far = new_counter
 				elif (user not in visited_list) and (user in vouchList):
-					max_length_so_far, visited_list = self.__check_who_trusts(start, user, visited_list, vouchList, new_counter, max_length_so_far)
+					if (not if_named_already):
+						if_named_already = (user == name_to_include)
+					max_length_so_far, visited_list = self.__check_who_trusts(start, user, visited_list, vouchList, name_to_include, if_named_already, new_counter, max_length_so_far)
 
 		return max_length_so_far, visited_list
 

@@ -97,6 +97,7 @@ public class TCPClient {
             file = new FileOutputStream(argStruct.downloadFileName);
         } catch (FileNotFoundException ex) {
              System.out.printf("Cannot write to file\n");
+             return;
         }
         
         startDownloadFile();
@@ -128,7 +129,7 @@ public class TCPClient {
         
         BufferedInputStream bufInput = new BufferedInputStream(fis);
         
-        sendPacket(Packet.START_OF_CERTIFICATE, argStruct.uploadFileName);
+        sendPacket(Packet.START_OF_CERTIFICATE, myFile.getName());
         
         byte[] response = readPacket();
         int bufLength;

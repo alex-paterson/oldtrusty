@@ -183,7 +183,12 @@ class TCPServer:
 	def __send_file(self, c, addr, message):
 		desired_circumference, names, filename = self.__interpret_header(message)
 		
-		circum = self.__vouch_handler.get_circle_length(filename)
+		if not self.__vouch_handler.does_file_exist(filename):
+			print "File not found: ", filename
+			self.__send_packet(c, Packet.FILE_DOESNT_EXIST, filename, addr)
+			return
+		
+		circum = self.__vouch_handler.get_circle_length(filename, names)
 
 		if desired_circumference > circum:
 			self.__send_packet(c, Packet.FILE_NOT_VOUCHED,
@@ -200,6 +205,7 @@ class TCPServer:
 		for filename in listDir:
 			out = out + "Filename: \n" + filename
 			out = out + "\nVouched by: \n" + self.__vouch_handler.list_vouches(filename)
+			out = out + "Length of: " + str(self.__vouch_handler.get_circle_length(filename, ""))
 
 		self.__send_packet(c, Packet.FILE_LIST, out, addr)
 
@@ -312,15 +318,22 @@ class TCPServer:
 
 	# File I/O
 	
+	def __fix_filename(self, filename):
+		counter = 0
+		for letter in filename:
+			if not (letter.isalpha() or letter == '.' or letter == '_' or letter == '-'):
+				return filename[0:counter]
+			counter = counter + 1
+	
 	# decrypts the request file header
 	def __interpret_header(self, message):
 		desired_circumference = ord(message[0])
 		num_names = ord(message[1])
-		names = []
+		names = ""
 		for i in range(0, num_names):
-			s = message[2 + i*Packet.MAX_NAME_LENGTH:1 + (i+2)*Packet.MAX_NAME_LENGTH]
-			names.append(s)
-		filename = message[2+num_names*Packet.MAX_NAME_LENGTH:]
+			s = message[2 + i*Packet.MAX_NAME_LENGTH:1 + (i+1)*Packet.MAX_NAME_LENGTH]
+			names = s
+		filename = self.__fix_filename(message[2+num_names*Packet.MAX_NAME_LENGTH:])
 		return desired_circumference, names, filename
 
 	# Returns file contents
