@@ -70,8 +70,6 @@ class TCPServer:
             print("$ Connection from {} closed\n".format(addr))
             c.close()
 
-        print "\n\nReceived: ", data, "\n"
-
         packet_type = self.__read_header(data)
         message = self.__strip_header(data)
         print("- RECEIVING PACKET {}".format(packet_type))
