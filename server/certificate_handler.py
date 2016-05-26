@@ -30,21 +30,21 @@ class CertificateHandler:
         else:
             self.__trust_list[subject] = [trustedBy]
 
-	def get_length_including(self, vouchList, name_to_include):
-		if len(vouchList) == 0:
-			return 0
-		start = vouchList[0]
-		print "Checking vouches, including - ", name_to_include, "- starting at", start
+    def get_length_including(self, vouchList, name_to_include):
+        if len(vouchList) == 0:
+            return 0
+        start = vouchList[0]
+        print "Checking vouches, including - ", name_to_include, "- starting at", start
 
-		if len(name_to_include) == 0:
-			if_named = True
-		else:
-			if_named = False
+        if len(name_to_include) == 0:
+            if_named = True
+        else:
+            if_named = False
 
-		length, visited = self.__check_who_trusts(start, start, [], vouchList, name_to_include, if_named, 0, 0)
+        length, visited = self.__check_who_trusts(start, start, [], vouchList, name_to_include, if_named, 0, 0)
 
-		print "length ", length
-		return length
+        print "length ", length
+        return length
 
     def __check_who_trusts(self, start, current, visited_list, vouchList, name_to_include, if_named_already, counter, max_length_so_far):
         new_counter = counter + 1
@@ -67,10 +67,10 @@ class CertificateHandler:
 
         return max_length_so_far, visited_list
 
-	def __ID(self, name):
-		return name.CN
+    def __ID(self, name):
+        return name.CN
 
-	def get_certificate_subject(self, certificate):
-		cert = crypto.load_certificate(crypto.FILETYPE_PEM, certificate)
+    def get_certificate_subject(self, certificate):
+        cert = crypto.load_certificate(crypto.FILETYPE_PEM, certificate)
 
-		return self.__ID(cert.get_subject())
+        return self.__ID(cert.get_subject())
