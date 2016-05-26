@@ -40,7 +40,7 @@ class Packet:
 
 class TCPServer:
 
-	def __init__(self, host='192.168.206.138', port=3002):
+	def __init__(self, host='127.0.0.1', port=3002):
 		self.__host = host
 		self.__port = port
 		self.__certificate_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'db/certificates/')
@@ -314,13 +314,13 @@ class TCPServer:
 	
 	# decrypts the request file header
 	def __interpret_header(self, message):
-		desired_circumference = int(message[0])
-		num_names = int(message[1])
+		desired_circumference = ord(message[0])
+		num_names = ord(message[1])
 		names = []
 		for i in range(0, num_names):
-			s = message[2 + i*MAX_NAME_LENGTH:1 + (i+2)*MAX_NAME_LENGTH]
+			s = message[2 + i*Packet.MAX_NAME_LENGTH:1 + (i+2)*Packet.MAX_NAME_LENGTH]
 			names.append(s)
-		filename = message[2+num_names*MAX_NAME_LENGTH:]
+		filename = message[2+num_names*Packet.MAX_NAME_LENGTH:]
 		return desired_circumference, names, filename
 
 	# Returns file contents
