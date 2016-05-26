@@ -245,9 +245,9 @@ class TCPServer:
         desired_circumference = ord(message[0])
         num_names = ord(message[1])
         if num_names == 0:
-			names = ""
-		else:
-			a = 2 + i*Packet.MAX_NAME_LENGTH
+            names = ""
+        else:
+            a = 2 + i*Packet.MAX_NAME_LENGTH
             b = 2 + (i+1)*Packet.MAX_NAME_LENGTH
             s = message[ a : b ]
             names = s
