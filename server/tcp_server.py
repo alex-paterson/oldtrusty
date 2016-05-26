@@ -1,8 +1,8 @@
 import sys, shlex, socket, subprocess, atexit, os
 from vouch_handler import VouchHandler
 
-#note: needs to be fixed
-RECV_LENGTH = 2096
+INITIAL_RECV_LENGTH = 2048
+MAX_NAME_LENGTH = 32
 
 class Packet:
 	START_OF_FILE = '000'
@@ -10,9 +10,6 @@ class Packet:
 
 	FILE_CONTENT = '010'
 	CERTIFICATE_CONTENT = '011'
-
-	END_OF_FILE = '020'
-	END_OF_CERTIFICATE = '021'
 
 	REQUEST_FILE = '030'
 
@@ -36,7 +33,6 @@ class Packet:
 	FILE_SUCCESSFULLY_VOUCHED  = '601'
 	FILE_NOT_VOUCHED = '602'
 
-	MAX_NAME_LENGTH = 32
 
 class TCPServer:
 
@@ -69,7 +65,7 @@ class TCPServer:
 
 	def __receive_first_packet_from_connection(self, c, addr):
 		# Receive new data   - NOTE: needs to be fixed
-		data = c.recv(RECV_LENGTH)
+		data = c.recv(INITIAL_RECV_LENGTH)
 		if not data:
 			print("$ Connection from {} closed\n".format(addr))
 			c.close()
@@ -115,17 +111,10 @@ class TCPServer:
 			filename = message
 			self.__handle_vouch(c, addr, message)
 
-		# Unexpected headers. These sould only arrive after entering an
-		# internal loop.
-		elif packet_type == Packet.FILE_PART:
-			self.__send_packet(c, Packet.UNEXPECTED_HEADER, "Unexpected header {}".format(packet_type), addr)
-		elif packet_type == Packet.END_OF_FILE:
-			self.__send_packet(c, Packet.UNEXPECTED_HEADER, "Unexpected header {}".format(packet_type), addr)
-		elif packet_type == Packet.CERTIFICATE_PART:
-			self.__send_packet(c, Packet.UNEXPECTED_HEADER, "Unexpected header {}".format(packet_type), addr)
-		elif packet_type == Packet.END_OF_CERTIFICATE:
-			self.__send_packet(c, Packet.UNEXPECTED_HEADER, "Unexpected header {}".format(packet_type), addr)
+		# Other headers should only arrive after entering an internal loop
+		# or should only be received by client.
 		else:
+			self.__send_packet(c, Packet.UNEXPECTED_HEADER, "Unexpected header {}".format(packet_type), addr)
 			print("Received unexpected header {}.\n".format(packet_type))
 
 	# Internal Loops
@@ -146,8 +135,6 @@ class TCPServer:
 				resp_packet_type, resp_message = self.__append_file(filename, recv_message)
 				# sends status and message back
 				self.__send_packet(c, resp_packet_type, resp_message, addr)
-			elif recv_packet_type == Packet.END_OF_FILE:
-				print("$ LEAVE INTERNAL LOOP __start_receiving_file\n")
 			else:
 				print("Received unexpected header {}.\n".format(recv_packet_type))
 				self.__send_packet(c, Packet.UNEXPECTED_HEADER, "Unexpected {}".format(recv_packet_type), addr)
@@ -171,8 +158,6 @@ class TCPServer:
 				resp_packet_type, resp_message = self.__append_certificate(filename, recv_message)
 				# sends status and message back
 				self.__send_packet(c, resp_packet_type, resp_message, addr)
-			elif recv_packet_type == Packet.END_OF_CERTIFICATE:
-				print("$ LEAVE INTERNAL LOOP __start_receiving_certificate\n")
 			else:
 				print("Received unexpected header {}.\n".format(recv_packet_type))
 				self.__send_packet(c, Packet.UNEXPECTED_HEADER, "Unexpected {}".format(recv_packet_type), addr)
@@ -182,7 +167,7 @@ class TCPServer:
 
 	def __send_file(self, c, addr, message):
 		desired_circumference, names, filename = self.__interpret_header(message)
-		
+
 		circum = self.__vouch_handler.get_circle_length(filename)
 
 		if desired_circumference > circum:
@@ -220,7 +205,7 @@ class TCPServer:
 		c.send(self.__add_header(packet_type, message))
 
 	def __receive_packet(self, c):
-		packet = c.recv(RECV_LENGTH)
+		packet = c.recv(INITIAL_RECV_LENGTH)
 		recv_header, recv_message =  self.__split_packet(packet)
 		print("- RECEIVING PACKET {}".format(recv_header))
 		print("{}\n".format(recv_message))
@@ -311,7 +296,7 @@ class TCPServer:
 
 
 	# File I/O
-	
+
 	# decrypts the request file header
 	def __interpret_header(self, message):
 		desired_circumference = int(message[0])
