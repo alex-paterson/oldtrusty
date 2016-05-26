@@ -162,7 +162,7 @@ public class TCPClient {
         
         BufferedInputStream bufInput = new BufferedInputStream(fis);
         
-        sendPacket(Packet.START_OF_FILE, argStruct.uploadFileName);
+        sendPacket(Packet.START_OF_FILE, myFile.getName());
         
         byte[] response = readPacket();
         int bufLength;
@@ -273,13 +273,26 @@ public class TCPClient {
             return new byte[1];
         }
         
-        byte[] buf = new byte[2 + argStruct.namesToInclude.size()*Packet.MAX_NAME_LENGTH + Packet.MAX_NAME_LENGTH];
+        byte[] buf = new byte[3 + argStruct.namesToInclude.size()*Packet.MAX_NAME_LENGTH + Packet.MAX_NAME_LENGTH];
         buf[0] = argStruct.circleCircumference;
         buf[1] = (byte) numNames;
         for(int i = 0; i < numNames; i++)
-            System.arraycopy(argStruct.namesToInclude.get(i).getBytes(), 0, buf, i*Packet.MAX_NAME_LENGTH + 2, Packet.MAX_NAME_LENGTH);
+        {
+            if (argStruct.namesToInclude.get(i).length() > Packet.MAX_NAME_LENGTH) {
+                System.out.printf("Name too long\n");
+                return new byte[1];
+            }
+            System.arraycopy(argStruct.namesToInclude.get(i).getBytes(), 0, buf, i*Packet.MAX_NAME_LENGTH + 2, argStruct.namesToInclude.get(i).length());
+        }
+            
         
-        System.arraycopy(argStruct.downloadFileName.getBytes(), 0, buf, numNames*Packet.MAX_NAME_LENGTH + 2, Packet.MAX_NAME_LENGTH);
+        if(argStruct.downloadFileName.length() > Packet.MAX_NAME_LENGTH)
+        {
+            System.out.printf("Filename too long\n");
+            return new byte[1];
+        }
+            
+        System.arraycopy(argStruct.downloadFileName.getBytes(), 0, buf, numNames*Packet.MAX_NAME_LENGTH + 2, argStruct.downloadFileName.length());
         return buf;
     }
     
