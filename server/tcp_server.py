@@ -1,10 +1,9 @@
 import sys, shlex, socket, subprocess, atexit, os
 from vouch_handler import VouchHandler
 
-INITIAL_RECV_LENGTH = 2048
-MAX_NAME_LENGTH = 32
 
-# 256^4 = 4228M
+INITIAL_RECV_LENGTH = 2048
+
 
 class Packet:
     START_OF_FILE = '000'
@@ -41,6 +40,8 @@ class Packet:
 
     FILE_SUCCESSFULLY_VOUCHED  = '601'
     FILE_NOT_VOUCHED = '602'
+    
+    MAX_NAME_LENGTH = 32
 
 
 class TCPServer:
@@ -73,7 +74,6 @@ class TCPServer:
         self.__s.connect((self.__host, self.__port))
 
     def __receive_first_packet_from_connection(self, c, addr):
-        # Receive new data   - NOTE: needs to be fixed
         data = c.recv(INITIAL_RECV_LENGTH)
         if not data:
             print("$ Connection from {} closed\n".format(addr))
@@ -175,16 +175,25 @@ class TCPServer:
             print("$ LEAVE INTERNAL LOOP __start_receiving_certificate\n")
 
     def __send_file(self, c, addr, message):
-        desired_circumference, names, filename = self.__interpret_header(message)
+        desired_circumference, names, filename = self.__interpret_file_request_header(message)
 
         circum = self.__vouch_handler.get_circle_length(filename)
+
 
         if desired_circumference > circum:
             self.__send_packet(c, Packet.FILE_NOT_VOUCHED,
                                "Only {} people have vouched for this file.".format(circum), addr)
         else:
-            message = open(os.path.join(self.__files_path, filename), 'r').read()
-            self.__send_packet(c, Packet.FILE_CONTENT, message, addr)
+            file_content = open(os.path.join(self.__files_path, filename), 'r').read()
+            #TODO: Handle bad file
+            file_content_length = chr(len(file_content))
+            # Send START_OF_FILE
+            self.__send_packet(c, Packet.START_OF_FILE, file_content_length, addr)
+            # Receive READY_TO_RECEIVE
+            recv_packet_type, recv_message = self.__receive_packet(c)
+            if recv_packet_type == READY_TO_RECEIVE:
+                # Send FILE_CONTENT
+                self.__send_packet(c, Packet.FILE_CONTENT, file_content_length, addr)
 
     def __send_file_list(self, c, addr):
         listDir = os.listdir(self.__files_path)
@@ -224,6 +233,17 @@ class TCPServer:
 
     def __split_packet(self, packet):
         return self.__read_header(packet), self.__strip_header(packet)
+
+    # decrypts the request file header
+    def __interpret_file_request_header(self, message):
+        desired_circumference = ord(message[0])
+        num_names = ord(message[1])
+        names = []
+        for i in range(0, num_names):
+            s = message[2 + i*Packet.MAX_NAME_LENGTH:1 + (i+2)*Packet.MAX_NAME_LENGTH]
+            names.append(s)
+        filename = message[2+num_names*Packet.MAX_NAME_LENGTH:]
+        return desired_circumference, names, filename
 
     def __add_header(self, packet_type, message):
         return packet_type + message
@@ -305,17 +325,6 @@ class TCPServer:
 
 
     # File I/O
-
-    # decrypts the request file header
-    def __interpret_header(self, message):
-        desired_circumference = ord(message[0])
-        num_names = ord(message[1])
-        names = []
-        for i in range(0, num_names):
-            s = message[2 + i*Packet.MAX_NAME_LENGTH:1 + (i+2)*Packet.MAX_NAME_LENGTH]
-            names.append(s)
-        filename = message[2+num_names*Packet.MAX_NAME_LENGTH:]
-        return desired_circumference, names, filename
 
     # Returns file contents
     def __read_file(self, filename):
