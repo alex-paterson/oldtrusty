@@ -9,3 +9,7 @@ def length_in_binary(the_file):
             break
 
     return ''.join(length_rep)
+
+def read_in_file(filepath):
+    with open(filepath) as f:
+        return f.read()
