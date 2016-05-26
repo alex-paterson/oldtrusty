@@ -183,7 +183,12 @@ class TCPServer:
             self.__send_packet(c, Packet.FILE_DOESNT_EXIST, filename, addr)
             return
 
-        circum = self.__vouch_handler.get_circle_length(filename)
+        #TODO:
+        #TODO:
+        #TODO: Vouch handler needs a get_circle_length method that takes multiple names
+        #TODO:
+        #TODO:
+        circum = self.__vouch_handler.get_circle_length(filename, names[0] if names else [""])
 
         if desired_circumference > circum:
             self.__send_packet(c, Packet.FILE_NOT_VOUCHED,
@@ -195,9 +200,9 @@ class TCPServer:
             self.__send_packet(c, Packet.START_OF_FILE, file_content_length, addr)
             # Receive READY_TO_RECEIVE
             recv_packet_type, recv_message = self.__receive_packet(c)
-            if recv_packet_type == READY_TO_RECEIVE:
+            if recv_packet_type == Packet.READY_TO_RECEIVE:
                 # Send FILE_CONTENT
-                self.__send_packet(c, Packet.FILE_CONTENT, file_content_length, addr)
+                self.__send_packet(c, Packet.FILE_CONTENT, file_content, addr)
 
     def __send_file_list(self, c, addr):
         listDir = os.listdir(self.__files_path)
