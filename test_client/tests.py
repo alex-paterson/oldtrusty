@@ -46,3 +46,18 @@ def test_get_file_plain(s):
     s.send(packet)
     res = s.recv(2048)
     check_packet_header(1, res, Packet.FILE_CONTENT)
+
+
+def test_get_file_plain(s):
+
+    # First we send a START_OF_FILE
+    packet = Packet.REQUEST_FILE + chr(0) + chr(1) + filename_one
+    s.send(packet)
+    res = s.recv(2048)
+    check_packet_header(1, res, Packet.START_OF_FILE)
+
+    # Send READY_TO_RECEIVE
+    packet = Packet.READY_TO_RECEIVE
+    s.send(packet)
+    res = s.recv(2048)
+    check_packet_header(1, res, Packet.FILE_CONTENT)

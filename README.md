@@ -2,9 +2,51 @@
 
 ## To Do
 
-Right now files are send in packets of 1024 bytes. This is unnecessary, the packets can be as large as they need to be.
+### Add files
 
-It's still good that the client/server send SOF and EOF packets which communicate whether or not the transfer *will* be valid, then whether or not the transfer *was* successful.
+✓ test_add_new_file
+
+✓ test_add_existing_file
+
+### Add certificates
+
+test_add_new_certificate
+
+test_add_existing_certificate
+
+### Vouching for files
+
+test_vouch_for_unvouched_file (disperse these throughout the relevant get tests)
+
+test_vouch_for_singly_vouched_file
+
+test_vouch_for_doubly_vouched_file
+
+### Get Files
+
+✓ test_get_file_plain
+
+test_get_file_plain_fail
+
+test_get_file_with_trust_circle_diameter_one
+
+test_get_file_with_trust_circle_diameter_one_fail
+
+test_get_file_with_trust_circle_diameter_one_and_name
+
+test_get_file_with_trust_circle_diameter_two
+
+test_get_file_with_trust_circle_diameter_two_and_name (try both names)
+
+test_get_file_with_trust_circle_diameter_two_fail
+
+test_get_file_with_trust_circle_diameter_two_and_name_fail (try both names)
+
+test_get_file_with_trust_circle_diameter_three
+
+test_get_file_with_trust_circle_diameter_three_and_name (try all names)
+
+
 
 ## Signing
 
