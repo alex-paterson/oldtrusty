@@ -92,13 +92,13 @@ public class TCPClient {
     
     private void downloadFile() throws IOException
     {
-        FileOutputStream file = null;
+     /*   FileOutputStream file = null;
         try {
             file = new FileOutputStream(argStruct.downloadFileName);
         } catch (FileNotFoundException ex) {
              System.out.printf("Cannot write to file\n");
              return;
-        }
+        }*/
         
         startDownloadFile();
         
@@ -106,12 +106,10 @@ public class TCPClient {
         
         while(isOfType(response, Packet.FILE_PART))
         {
-            file.write(stripHeader(response));
+            System.out.printf("%s", new String(stripHeader(response), java.nio.charset.StandardCharsets.UTF_8));
             writePacket(Packet.READY_TO_RECEIVE_PART.getBytes());
             response = readPacket();
         }
-        
-        file.close();        
     }
     
     private void sendCertificate() throws IOException
@@ -286,7 +284,6 @@ public class TCPClient {
             System.arraycopy(argStruct.namesToInclude.get(i).getBytes(), 0, buf, i*Packet.MAX_NAME_LENGTH + 2, argStruct.namesToInclude.get(i).length());
         }
             
-        
         if(argStruct.downloadFileName.length() > Packet.MAX_NAME_LENGTH)
         {
             System.out.printf("Filename too long\n");

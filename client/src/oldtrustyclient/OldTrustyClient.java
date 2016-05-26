@@ -21,12 +21,8 @@ public class OldTrustyClient {
         ArgParser argParser = new ArgParser();
         ArgParser.ArgumentStruct argStruct = argParser.parse(args);
         
-        System.out.printf("Go\n");
-        
         TCPClient client = new TCPClient(argStruct);
         client.go();
-            
-        System.out.printf("Done\n");
     }
     
 }
