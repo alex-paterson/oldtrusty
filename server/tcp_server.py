@@ -20,6 +20,7 @@ class Packet:
     # 030-<circumference[1]>-<name-present[1]>-[<name[32]>]-<filename[MAX_NAME_LENGTH]>
 
     READY_TO_RECEIVE = '200'
+    SUCCESSFULLY_ADDED = '201'
 
     FILE_ALREADY_EXISTS = '401'
     FILE_DOESNT_EXIST = '411'
@@ -71,28 +72,24 @@ class TCPServer:
 
     # Connections and basic communication
 
-    def __connect(self):
-        self.__s.connect((self.__host, self.__port))
-
     def __receive_first_packet_from_connection(self, c, addr):
         data = c.recv(INITIAL_RECV_LENGTH)
-        if not data:
-            print("$ Connection from {} closed\n".format(addr))
-            c.close()
+        while data:
+            if not data:
+                print("$ Connection from {} closed (no data)\n".format(addr))
+                c.close()
+                return
 
-        packet_type = self.__read_header(data)
-        message = self.__strip_header(data)
-        print("- RECEIVING PACKET {}".format(packet_type))
-        print("{}\n".format(message))
+            packet_type = self.__read_header(data)
+            message = self.__strip_header(data)
+            print("- RECEIVING PACKET {}".format(packet_type))
+            print("{}\n".format(message))
 
-        # Act on the data and retrieve response
-        # send_packet_type, send_message = self.__perform_action(c, packet_type, message)
-        self.__handle_first_packet(c, addr, packet_type, message)
+            # Act on the data and retrieve response
+            # send_packet_type, send_message = self.__perform_action(c, packet_type, message)
+            self.__handle_first_packet(c, addr, packet_type, message)
 
-        # The first packet will make it obvious whether or not further packets
-        # are coming. We'll enter an internal loop above if this is true. Hence
-        # we close the connection if we make it down here
-        c.close()
+            data = c.recv(INITIAL_RECV_LENGTH)
         print("$ Connection from {} closed\n".format(addr))
 
     # We pass addr in for future logging
@@ -100,17 +97,24 @@ class TCPServer:
 
         # START_OF_FILE
         if packet_type == Packet.START_OF_FILE:
-            filename = message
-            self.__start_receiving_file(c, addr, filename)
+            length, filename = self.__interpret_start_of_file(message)
+            self.__interpret_start_of_file(message)
+            print("$ ENTER INTERNAL LOOP __start_receiving_file\n")
+            self.__start_receiving_file(c, addr, int(length), filename)
+            print("$ LEAVE INTERNAL LOOP __start_receiving_file\n\n")
 
         # START_OF_CERTIFICATE
         elif packet_type == Packet.START_OF_CERTIFICATE:
             filename = message
+            print("$ ENTER INTERNAL LOOP __start_receiving_certificate\n")
             self.__start_receiving_certificate(c, addr, filename)
+            print("$ LEAVE INTERNAL LOOP __start_receiving_certificate\n\n")
 
         # REQUEST_FILE
         elif packet_type == Packet.REQUEST_FILE:
+            print("$ ENTER INTERNAL LOOP __send_file\n")
             self.__send_file(c, addr, message)
+            print("$ LEAVE INTERNAL LOOP __send_file\n\n")
 
         # REQUEST_FILE_LIST
         elif packet_type == Packet.REQUEST_FILE_LIST:
@@ -129,8 +133,7 @@ class TCPServer:
 
     # Internal Loops
 
-    def __start_receiving_file(self, c, addr, filename):
-        print("$ ENTER INTERNAL LOOP __start_receiving_file\n")
+    def __start_receiving_file(self, c, addr, length, filename):
         # Calls __create_file which returns a status and message
         resp_packet_type, resp_message = self.__create_file(filename)
         # sends status and message back
@@ -139,21 +142,17 @@ class TCPServer:
         if resp_packet_type == Packet.READY_TO_RECEIVE:
             # we start waiting HERE for new packets from the connection
             recv_packet_type, recv_message = self.__receive_packet(c)
-            # if file part, append
+            # recv_packet_type, recv_message = self.__receive_packet_with_content_of_length(c, length)
+            # if file, append
             if recv_packet_type == Packet.FILE_CONTENT:
                 # calls __append_file which returns a status and message
                 resp_packet_type, resp_message = self.__append_file(filename, recv_message)
                 # sends status and message back
                 self.__send_packet(c, resp_packet_type, resp_message, addr)
             else:
-                print("Received unexpected header {}.\n".format(recv_packet_type))
                 self.__send_packet(c, Packet.UNEXPECTED_HEADER, "Unexpected {}".format(recv_packet_type), addr)
-                print("$ LEAVE INTERNAL LOOP __start_receiving_file\n")
-        else:
-            print("$ LEAVE INTERNAL LOOP __start_receiving_file\n")
 
     def __start_receiving_certificate(self, c, addr, filename):
-        print("$ ENTER INTERNAL LOOP __start_receiving_certificate\n")
         # Calls __create_file which returns a status and message
         resp_packet_type, resp_message = self.__create_certificate(filename)
         # sends status and message back
@@ -169,18 +168,14 @@ class TCPServer:
                 # sends status and message back
                 self.__send_packet(c, resp_packet_type, resp_message, addr)
             else:
-                print("Received unexpected header {}.\n".format(recv_packet_type))
                 self.__send_packet(c, Packet.UNEXPECTED_HEADER, "Unexpected {}".format(recv_packet_type), addr)
-                print("$ LEAVE INTERNAL LOOP __start_receiving_certificate\n")
-        else:
-            print("$ LEAVE INTERNAL LOOP __start_receiving_certificate\n")
 
     def __send_file(self, c, addr, message):
         desired_circumference, name, filename = self.__interpret_file_request(message)
 
         if not self.__vouch_handler.does_file_exist(filename):
-            print "File not found: ", filename
-            self.__send_packet(c, Packet.FILE_DOESNT_EXIST, filename, addr)
+            res_message = "File not found: {}".format(repr(filename))
+            self.__send_packet(c, Packet.FILE_DOESNT_EXIST, res_message, addr)
             return
 
         circum = self.__vouch_handler.get_circle_length(filename, name)
@@ -224,15 +219,22 @@ class TCPServer:
 
     # We pass addr in for future logging
     def __send_packet(self, c, packet_type, message, addr):
-        print("+ SENDING PACKET {}".format(packet_type))
-        print("{}\n".format(message))
+        print "+ SENDING PACKET {}".format(repr(packet_type))
+        print "{}".format(repr(message)), "\n"
         c.send(self.__add_header(packet_type, message))
 
     def __receive_packet(self, c):
         packet = c.recv(INITIAL_RECV_LENGTH)
         recv_header, recv_message =  self.__split_packet(packet)
-        print("- RECEIVING PACKET {}".format(recv_header))
-        print("{}\n".format(recv_message))
+        print "- RECEIVING PACKET {}".format(repr(recv_header))
+        print "{}".format(repr(recv_message)), "\n"
+        return recv_header, recv_message
+
+    def __receive_packet_with_content_of_length(self, c, length):
+        packet = c.recv(length+3)
+        recv_header, recv_message =  self.__split_packet(packet)
+        print "- RECEIVING PACKET {}".format(repr(recv_header))
+        print "{}".format(repr(recv_message)), "\n"
         return recv_header, recv_message
 
     # Packet formatting
@@ -243,17 +245,23 @@ class TCPServer:
     # decrypts the request file header
     def __interpret_file_request(self, message):
         desired_circumference = ord(message[0])
-        num_names = ord(message[1])
-        if num_names == 0:
-            names = ""
-        else:
-            a = 2 + Packet.MAX_NAME_LENGTH
-            b = 2 + 2*Packet.MAX_NAME_LENGTH
-            s = message[ a : b ]
-            names = s
-        filename = message[2+num_names*Packet.MAX_NAME_LENGTH:]
-        filename = self.__fix_filename(filename)
-        return desired_circumference, names, filename
+
+        name = None if ord(message[1]) == 0 else message[ 2 : 2+Packet.MAX_NAME_LENGTH ]
+        filename = message[2+Packet.MAX_NAME_LENGTH:] if name else message[2:]
+
+        # filename = self.__fix_filename(filename)
+        return desired_circumference, name, filename
+
+    # decrypts the request file header
+    def __interpret_start_of_file(self, message):
+        length_ascii = message[0:4]
+        filename = message[4:]
+        length = 1
+        for c in length_ascii:
+            if c == chr(0):
+                break
+            length *= ord(c)
+        return length, filename
 
     # Shrinks the filename found in packet down to letters only (could be done better)
     def __fix_filename(self, filename):
@@ -294,7 +302,8 @@ class TCPServer:
         if os.path.isfile(filepath):
             with open(filepath, 'a') as open_file:
                 open_file.write(contents)
-                return Packet.READY_TO_RECEIVE, "File successfully appended"
+                self.__vouch_handler.add_file(filename)
+                return Packet.SUCCESSFULLY_ADDED, "File successfully appended"
         else:
             return Packet.FILE_DOESNT_EXIST, "File doesn't exist"
 
@@ -313,7 +322,7 @@ class TCPServer:
         if os.path.isfile(filepath):
             with open(filepath, 'a') as open_file:
                 open_file.write(contents)
-                return Packet.READY_TO_RECEIVE, "Certificate successfully appended"
+                return Packet.SUCCESSFULLY_ADDED, "Certificate successfully appended"
         else:
             return Packet.CERTIFICATE_DOESNT_EXIST, "Certificate doesn't exist"
 

@@ -40,6 +40,7 @@ class CertificateHandler:
 			if_named = True
 		else:
 			if_named = False
+
 		length, visited = self.__check_who_trusts(start, start, [], vouchList, name_to_include, if_named, 0, 0)
 
 		print "length ", length
@@ -52,12 +53,12 @@ class CertificateHandler:
 		print "visiting: ", current, max_length_so_far
 
 		if current in self.__trust_list:
-			for user in self.__trust_list[current]:		
+			for user in self.__trust_list[current]:
 				if user == start:
-					if (new_counter > max_length_so_far) and (if_named_already):
+					if new_counter > max_length_so_far and if_named_already:
 						max_length_so_far = new_counter
-				elif (user not in visited_list) and (user in vouchList):
-					if (not if_named_already):
+				elif user not in visited_list and user in vouchList:
+					if not if_named_already:
 						if_named_already = (user == name_to_include)
 					max_length_so_far, visited_list = self.__check_who_trusts(start, user, visited_list, vouchList, name_to_include, if_named_already, new_counter, max_length_so_far)
 

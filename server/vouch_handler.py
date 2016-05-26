@@ -33,7 +33,7 @@ class VouchHandler:
             print "no such file: " + filename
 
     def does_file_exist(self, filename):
-        return filename in self.__fileList  
+        return filename in self.__fileList
 
     def get_circle_length(self, filename, name_to_include):
         if self.does_file_exist(filename):
