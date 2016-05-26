@@ -245,7 +245,6 @@ class TCPServer:
     # decrypts the request file header
     def __interpret_file_request(self, message):
         desired_circumference = ord(message[0])
-
         name = None if ord(message[1]) == 0 else message[ 2 : 2+Packet.MAX_NAME_LENGTH ]
         filename = message[2+Packet.MAX_NAME_LENGTH:] if name else message[2:]
 
@@ -267,7 +266,7 @@ class TCPServer:
     def __fix_filename(self, filename):
         counter = 0
         for letter in filename:
-            if not (letter.isalpha() or letter == '.' or letter == '_' or letter == '-'):
+            if not (letter.isalpha() or letter.isdigit() or letter == '.' or letter == '_' or letter == '-'):
                 return filename[0:counter]
             counter = counter + 1
         return filename
