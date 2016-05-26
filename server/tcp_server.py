@@ -4,14 +4,21 @@ from vouch_handler import VouchHandler
 INITIAL_RECV_LENGTH = 2048
 MAX_NAME_LENGTH = 32
 
+# 256^4 = 4228M
+
 class Packet:
     START_OF_FILE = '000'
+    # 000-<file-length[4]>-<filename[MAX_NAME_LENGTH]>
     START_OF_CERTIFICATE = '001'
+    # 001-<file-length[4]>-<filename[MAX_NAME_LENGTH]>
 
     FILE_CONTENT = '010'
+    # 010-<content[PRE-ESTABLISHED]>
     CERTIFICATE_CONTENT = '011'
+    # 011-<content[PRE-ESTABLISHED]>
 
     REQUEST_FILE = '030'
+    # 030-<circumference[1]>-<name-present[1]>-[<name[32]>]-<filename[MAX_NAME_LENGTH]>
 
     READY_TO_RECEIVE = '200'
 
@@ -19,6 +26,8 @@ class Packet:
     FILE_DOESNT_EXIST = '411'
     CERTIFICATE_ALREADY_EXISTS = '402'
     CERTIFICATE_DOESNT_EXIST = '412'
+
+    UNPROCESSABLE_ENTITY = '422'
 
     UNRECOGNIZED_HEADER = '500'
     UNEXPECTED_HEADER = '501'
