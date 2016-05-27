@@ -23,8 +23,7 @@ class VouchHandler:
     def add_vouch(self, filename, certname):
         if self.does_cert_exist(certname):
             if self.does_file_exist(filename):
-                # name = self.__certHandler.get_certificate_subject(certname)
-                name = certname
+                name = self.__certHandler.get_certificate_subject(certname)
                 self.__fileList[filename].append(name)
             else:
                 raise NoFileError("No such filename: " + filename)
