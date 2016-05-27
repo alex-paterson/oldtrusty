@@ -100,7 +100,6 @@ class TCPServer:
         # VOUCH_FOR_FILE
         elif packet_type == Packet.VOUCH_FOR_FILE:
             filename, certname = self.__interpret_vouch_for_file(message)
-            print filename, certname, "HERE"
             self.__handle_vouch(c, addr, filename, certname)
 
         # Other headers should only arrive after entering an internal loop
@@ -197,10 +196,10 @@ class TCPServer:
 
         try:
             self.__vouch_handler.add_vouch(filename, certname)
-        except NoCertificateError as e:
+        except NoFileError as e:
             self.__send_packet(c, Packet.FILE_DOESNT_EXIST, "File does not exist {}".format(filename), addr)
             return
-        except NoFileError as e:
+        except NoCertificateError as e:
             self.__send_packet(c, Packet.CERTIFICATE_DOESNT_EXIST, "Certificate does not exist {}".format(certname), addr)
             return
 

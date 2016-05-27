@@ -43,7 +43,6 @@ def test_add_existing_file(s):
     check_packet_header(2, res, Packet.SUCCESSFULLY_ADDED)
 
 
-
 def test_get_file_plain(s):
 
     # First we send a REQUEST_FILE
@@ -68,6 +67,7 @@ def test_get_nonexistent_file(s):
     s.send(packet)
     res = s.recv(2048)
     check_packet_header(1, res, Packet.FILE_DOESNT_EXIST)
+
 
 def test_get_unvouched_file_with_trust_circle_diameter_one(s):
 
@@ -110,6 +110,16 @@ def test_add_new_certificate(s):
     # Confirm we got SUCCESSFULLY_ADDED
     check_packet_header(2, res, Packet.SUCCESSFULLY_ADDED)
 
+
+def test_vouch_for_nonexistent_file(s):
+
+    # First we send a VOUCH_FOR_FILE
+    packet = Packet.VOUCH_FOR_FILE + buffer_name("i_do_not_exist.cert") + buffer_name(certificate_one_name)
+    print "Sending packet: ", repr(packet)
+    s.send(packet)
+    res = s.recv(2048)
+    print "Received packet: ", repr(res)
+    check_packet_header(1, res, Packet.FILE_DOESNT_EXIST)
 
 def test_get_singly_vouched_file_with_trust_circle_diameter_one(s):
 

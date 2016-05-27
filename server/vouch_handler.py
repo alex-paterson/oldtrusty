@@ -24,7 +24,7 @@ class VouchHandler:
     # For now just use common name as ID
     def add_vouch(self, filename, certname):
         if self.does_cert_exist(certname):
-            if does_file_exist(filename):
+            if self.does_file_exist(filename):
                 name = self.__certHandler.get_certificate_subject(certname)
                 self.__fileList[filename].addVouch(name)
                 print str(name) + " vouched for" + filename
@@ -48,7 +48,7 @@ class VouchHandler:
             vouches = self.__fileList[filename].getVouches()
             return self.__certHandler.get_length_including(vouches, name_to_include)
         else:
-            return 0;
+            raise NoFileError("File does not exist {}".format(filename))
 
     def list_vouches(self, filename):
         if filename in self.__fileList:

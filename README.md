@@ -18,6 +18,8 @@ test_add_existing_certificate
 
 ✓ test_vouch_for_unvouched_file
 
+✓ test_vouch_for_nonexistent_file
+
 ✓ test_vouch_for_unvouched_file_with_non_extistent_certificate
 
 test_vouch_for_singly_vouched_file

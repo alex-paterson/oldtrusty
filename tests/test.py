@@ -23,7 +23,7 @@ def check_packet_header(test_num, res, expected_header):
     if res_code+body == '':
         raise IOError("{}{}. Server crashed!{}".format(bcolors.FAIL, test_num, bcolors.ENDC))
     if res_code != expected_header:
-        raise ValueError("{}. expected response code of {}, got {}: {}".format(test_num, repr(expected_header), repr(res_code), repr(body)))
+        raise ValueError("\n{}. expected response code of {},\n got {}: {}".format(test_num, repr(expected_header), repr(res_code), repr(body)))
     else:
         print u"{}\u2713{} PASS: HEADER: {}".format(bcolors.OKGREEN, bcolors.ENDC, repr(res_code))
 
@@ -34,6 +34,6 @@ def check_packet_body(test_num, res, expected_body):
     if res_code+body == '':
         raise IOError("{}{}. Server crashed!{}".format(bcolors.FAIL, test_num, bcolors.ENDC))
     if body != expected_body:
-        raise ValueError("{}. expected body of {}, got {} {}".format(test_num, repr(expected_body), repr(res_code), repr(body)))
+        raise ValueError("\n{}. expected body of {},\n got {} {}".format(test_num, repr(expected_body), repr(res_code), repr(body)))
     else:
         print u"{}\u2713{} PASS: BODY: {}".format(bcolors.OKGREEN, bcolors.ENDC, repr(body))
