@@ -260,10 +260,10 @@ class TCPServer:
     # decrypts the request file header
     def __interpret_file_request(self, message):
         desired_circumference = ord(message[0])
-        name = None if ord(message[1]) == 0 else message[ 2 : 2+Packet.MAX_NAME_LENGTH ]
+        name = "" if ord(message[1]) == 0 else message[ 2 : 2+Packet.MAX_NAME_LENGTH ]
         filename = message[2+Packet.MAX_NAME_LENGTH:] if name else message[2:]
 
-        # filename = self.__fix_filename(filename)
+        filename = self.__fix_filename(filename)
         return desired_circumference, name, filename
 
     # decrypts the request file header
