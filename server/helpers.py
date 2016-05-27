@@ -2,18 +2,11 @@ import struct
 from .packet import Packet
 
 def ascii_to_length(length_ascii):
-    length = 1
-    for c in length_ascii:
-        if c == chr(0):
-            break
-        length *= ord(c)
-    return length
+    return struct.unpack(">i", length_ascii)[0]
 
 def length_in_binary(the_file):
-    length = len(the_file)
-
     length_rep = [chr(0)] * 4
-    length_rep[0:4] = struct.pack(">i", length)
+    length_rep[0:4] = struct.pack(">i", len(the_file))
 
     return ''.join(length_rep)
 

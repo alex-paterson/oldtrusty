@@ -14,7 +14,6 @@ class VouchHandler:
         listDir = os.listdir(self.__files_path)
 
         for filename in listDir:
-            print "Adding file: ", filename
             self.add_file(filename.strip())
 
     def add_file(self, filename):
@@ -43,14 +42,12 @@ class VouchHandler:
     def get_circle_length(self, filename, cert_to_include):
         if self.does_file_exist(filename):
             vouches = self.__fileList[filename]
-            print("22222222 __fileList", self.__fileList)
             return self.__certHandler.get_max_circle_length_including(vouches, cert_to_include)
         else:
             raise NoFileError("File does not exist {}".format(filename))
 
     def list_vouches(self, filename):
         if filename in self.__fileList:
-            print "list: ", self.__fileList[filename]
             return '\n'.join(str(self.__fileList[filename]))
         else:
             return "not found"
