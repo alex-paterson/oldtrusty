@@ -61,9 +61,9 @@ See requirements.txt - M2Crypto requires swig on OSX: `brew install swig` and op
 
 ✓ test_get_incomplete_diameter_three_file_with_trust_circle_diameter_three_2 (C<->A<->B) (error)
 
-✓ test_get_diameter_three_file_with_trust_circle_diameter_three (C<->A<->B->C)
+✗ test_get_diameter_three_file_with_trust_circle_diameter_three (C<->A<->B->C)
 
-✓ test_get_diameter_three_file_with_trust_circle_diameter_three_and_name
+✗ test_get_diameter_three_file_with_trust_circle_diameter_three_and_name
 
 ✓ test_get_diameter_three_file_with_trust_circle_diameter_four (error)
 

@@ -1,11 +1,13 @@
 from packet import Packet
-from helpers import length_in_binary, ascii_to_length, \
-                    read_in_file, buffer_name, unbuffer_name, \
-                    random_name
+from helpers import *
 from test import check_packet_header, check_packet_body
 
 file_one_content = "I'm a file full of good stuff."
 filename_one = "{}.txt".format(random_name())
+
+private_key_string_A = open('files/A/A.key').read()
+private_key_string_B = open('files/B/B.key').read()
+private_key_string_C = open('files/C/C.key').read()
 
 certificate_one_content = read_in_file('files/A/A.cert')
 certificate_two_content = read_in_file('files/B/B.cert')
@@ -157,7 +159,18 @@ def test_vouch_for_unvouched_file(s):
     s.send(packet)
     res = s.recv(2048)
     print "Received packet: ", repr(res)
-    check_packet_header(1, res, Packet.FILE_SUCCESSFULLY_VOUCHED)
+    check_packet_header(1, res, Packet.PUBKEY_CHALLENGE)
+
+    solution = str(solve_challenge(res[3:], private_key_string_A))
+    encrypted_solution = encrypt_solution(solution, private_key_string_A)
+
+    packet = Packet.PUBKEY_RESPONSE + encrypted_solution
+    print "Sending packet: ", repr(packet)
+    s.send(packet)
+    res = s.recv(2048)
+    print "Received packet: ", repr(res)
+    # Confirm we got FILE_SUCCESSFULLY_VOUCHED
+    check_packet_header(2, res, Packet.FILE_SUCCESSFULLY_VOUCHED)
 
 
 def test_get_singly_vouched_file_with_trust_circle_diameter_one(s):
@@ -263,7 +276,18 @@ def test_vouch_for_singly_vouched_file(s):
     s.send(packet)
     res = s.recv(2048)
     print "Received packet: ", repr(res)
-    check_packet_header(3, res, Packet.FILE_SUCCESSFULLY_VOUCHED)
+    check_packet_header(3, res, Packet.PUBKEY_CHALLENGE)
+
+    solution = str(solve_challenge(res[3:], private_key_string_B))
+    encrypted_solution = encrypt_solution(solution, private_key_string_B)
+
+    packet = Packet.PUBKEY_RESPONSE + encrypted_solution
+    print "Sending packet: ", repr(packet)
+    s.send(packet)
+    res = s.recv(2048)
+    print "Received packet: ", repr(res)
+    # Confirm we got FILE_SUCCESSFULLY_VOUCHED
+    check_packet_header(4, res, Packet.FILE_SUCCESSFULLY_VOUCHED)
 
 
 def test_get_diameter_one_file_with_trust_circle_diameter_two(s):
@@ -307,8 +331,18 @@ def test_vouch_for_doubly_vouched_file(s):
     s.send(packet)
     res = s.recv(2048)
     print "Received packet: ", repr(res)
-    check_packet_header(3, res, Packet.FILE_SUCCESSFULLY_VOUCHED)
+    check_packet_header(3, res, Packet.PUBKEY_CHALLENGE)
 
+    solution = str(solve_challenge(res[3:], private_key_string_C))
+    encrypted_solution = encrypt_solution(solution, private_key_string_C)
+
+    packet = Packet.PUBKEY_RESPONSE + encrypted_solution
+    print "Sending packet: ", repr(packet)
+    s.send(packet)
+    res = s.recv(2048)
+    print "Received packet: ", repr(res)
+    # Confirm we got FILE_SUCCESSFULLY_VOUCHED
+    check_packet_header(4, res, Packet.FILE_SUCCESSFULLY_VOUCHED)
 
 def test_get_file_with_trust_circle_diameter_two_and_name(s):
     # First we send a START_OF_CERTIFICATE
