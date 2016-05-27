@@ -193,8 +193,9 @@ class TCPServer:
 
 
     def __handle_vouch(self, c, addr, filename, certname):
-
         try:
+            if not self.__verify_user(c, addr, certname):
+                print "User not verified"
             self.__vouch_handler.add_vouch(filename, certname)
         except NoFileError as e:
             self.__send_packet(c, Packet.FILE_DOESNT_EXIST, "File does not exist {}".format(filename), addr)
@@ -204,6 +205,15 @@ class TCPServer:
             return
 
         self.__send_packet(c, Packet.FILE_SUCCESSFULLY_VOUCHED, "Successfully vouched for {} with {}".format(filename, certname), addr)
+
+    def __verify_user(c, addr, certname):
+        hashed_number, original_number = self.__vouch_handler.get_hashed_verification(certname)
+        #send this and receive
+        self.__send_packet(c, Packet.HASHED_RANDOM_NUMBER, hashed_number, addr)
+        recv_packet_type, recv_message = self.__receive_packet(c)
+        if recv_packet_type == Packet.UNHASED_RANDOM_NUMBER:
+            return self.__vouch_handler.verify_random_number(ord(recv_message), original_number)
+        return false
 
 
     # We pass addr in for future logging
