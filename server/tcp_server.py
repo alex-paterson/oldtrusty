@@ -196,6 +196,12 @@ class TCPServer:
         self.__send_packet(c, Packet.FILE_LIST, out, addr)
 
     def __handle_vouch(self, c, addr, filename, certname):
+        if not self.__vouch_handler.does_file_exist(filename):
+            self.__send_packet(c, Packet.FILE_DOESNT_EXIST, "File does not exist {}".format(filename), addr)
+            return
+        if not self.__vouch_handler.does_cert_exist(certname):
+            self.__send_packet(c, Packet.CERTIFICATE_DOESNT_EXIST, "Certificate does not exist {}".format(certname), addr)
+            return
         try:
             rsa_key = self.__vouch_handler.get_pubkey_from_certname(certname)
             random_number = str(random.randint(0, 99999))
