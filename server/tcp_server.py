@@ -22,8 +22,8 @@ class TCPServer:
     def __init__(self, host='127.0.0.1', port=3002):
         self.__host = host
         self.__port = port
-        self.__certfile_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'server.crt')
-        self.__keyfile_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'server.key')
+        self.__certfile_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'ssl/server.crt')
+        self.__keyfile_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'ssl/server.key')
         self.__certificate_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'db/certificates/')
         self.__files_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'db/files/')
         self.__vouch_handler = VouchHandler(self.__files_path, self.__certificate_path)

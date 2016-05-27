@@ -1,0 +1,21 @@
+#! /bin/bash
+#
+
+java -jar ../../client/dist/oldTrustyClient.jar --host 127.0.0.1:3002 -c 2 -v meme.txt 1/1-signed.crt
+java -jar ../../client/dist/oldTrustyClient.jar --host 127.0.0.1:3002 -c 2 -v meme.txt 2/2-signed.crt
+
+echo "testing fetch"
+java -jar ../../client/dist/oldTrustyClient.jar --host 127.0.0.1:3002 -f meme.txt
+echo "\n"
+
+echo "testing fetch -c 3"
+java -jar ../../client/dist/oldTrustyClient.jar --host 127.0.0.1:3002 -f meme.txt -c 3
+echo "\n"
+
+echo "testing fetch -n 3"
+java -jar ../../client/dist/oldTrustyClient.jar --host 127.0.0.1:3002 -f meme.txt -n 3
+echo "\n"
+
+echo "testing fetch -n 2"
+java -jar ../../client/dist/oldTrustyClient.jar --host 127.0.0.1:3002 -f meme.txt -n 2/2-signed.crt
+echo "\n"
