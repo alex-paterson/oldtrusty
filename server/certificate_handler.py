@@ -34,14 +34,17 @@ class CertificateHandler:
         if len(vouchList) == 0:
             return 0
         start = vouchList[0]
-        print "Checking vouches, including - ", name_to_include, "- starting at", start
 
         if not name_to_include or len(name_to_include) == 0:
             named = True
+            name = ""
         else:
             named = False
+            name = self.get_certificate_subject(name_to_include)
 
-        length, visited = self.__check_who_trusts(start, start, [], vouchList, name_to_include, named, 0, 0)
+        print "Checking vouches, including - ", name, "- starting at", start
+
+        length, visited = self.__check_who_trusts(start, start, [], vouchList, name, named, 0, 0)
 
         print "length ", length
         return length
@@ -68,9 +71,14 @@ class CertificateHandler:
         return max_length_so_far, visited_list
 
     def __ID(self, name):
-        return name.CN
+        return name.hash()
 
     def get_certificate_subject(self, certname):
+        if not os.path.isfile(os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                                           'db/certificates/',
+                                           certname)):
+            return ""
+
         with open(os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                'db/certificates/',
                                certname)) as f:
