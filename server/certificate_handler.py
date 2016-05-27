@@ -23,7 +23,7 @@ class CertificateHandler:
                 issuer = self.__ID(cert.get_issuer())
 
                 self.__add_trust(subject, issuer)
-                self.__add_trust(subject, cert)
+                self.__add_pubkey(subject, cert)
 
     def reload_certificates(self):
         print "Reloading certificates"
@@ -51,12 +51,13 @@ class CertificateHandler:
         print "checking pubkeys"
         for subject in self.__pubkey_list:
             first_pubkey = self.__pubkey_list[subject][0]
+            print self.__pubkey_list
             for pubkey in self.__pubkey_list[subject]:
                 if first_pubkey != pubkey:
                     print "Pubkeys do not match"
 
     def pubkey_from_certificate(self, certname):
-        filename = os.path.join(self.__certificate_path, f)
+        filename = os.path.join(self.__certificate_path, certname)
         with open(filename, 'rt') as cf:
             c = cf.read()
             cert = crypto.load_certificate(crypto.FILETYPE_PEM, c)
@@ -65,11 +66,12 @@ class CertificateHandler:
 
         if given_pubkey != self.__pubkey_for(subject):
             print "error, inconsistent pubkey"
-            return 0
+            return given_pubkey
         return pubkey
 
     def __pubkey_for(self, subject):
         if subject in self.__pubkey_list:
+            print "got pubkey"
             return self.__pubkey_list[subject][0]
         return 0
 

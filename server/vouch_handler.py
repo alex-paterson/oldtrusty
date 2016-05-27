@@ -56,13 +56,13 @@ class VouchHandler:
         self.__certHandler.reload_certificates()
 
     def get_hashed_verification(self, certname):
-        if self.does_file_exist(filename):
-            random_number = 1
+        if self.does_cert_exist(certname):
+            random_number = "1"
             pubkey = self.__certHandler.pubkey_from_certificate(certname)
             hashed_number = sign_data_with_pubkey(random_number, pubkey)
             return hashed_number, random_number
         else:
-            raise NoFileError("File does not exist {}".format(filename))
+            raise NoCertificateError("File does not exist {}".format(certname))
 
     def verify_random_number(self, returned_number, original_number):
         if returned_number == original_number:
