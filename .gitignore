@@ -9,6 +9,9 @@ venv/
 
 client/nbproject/private/
 
+server/db/certificates/*
+server/db/files/*
+
 .old_code/
 
 cert/
