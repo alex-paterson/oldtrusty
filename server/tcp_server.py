@@ -3,10 +3,14 @@ import sys
 import subprocess
 import socket
 import ssl
+import random
+import base64
+from M2Crypto import RSA
 
 from .vouch_handler import VouchHandler
 from .helpers import ascii_to_length, length_in_binary, buffer_name, unbuffer_name
 from .exceptions import *
+from .encryption_helpers import encrypt_with_key, check_solution
 from .packet import Packet
 
 
@@ -191,31 +195,25 @@ class TCPServer:
 
         self.__send_packet(c, Packet.FILE_LIST, out, addr)
 
-
     def __handle_vouch(self, c, addr, filename, certname):
         try:
-            if not self.__verify_user(c, addr, certname):
-                print "User not verified"
-            self.__vouch_handler.add_vouch(filename, certname)
+            rsa_key = self.__vouch_handler.get_pubkey_from_certname(certname)
+            random_number = str(random.randint(0, 99999))
+            cipher = encrypt_with_key(random_number, rsa_key)
+            self.__send_packet(c, Packet.PUBKEY_CHALLENGE, cipher, addr)
+            recv_packet_type, recv_message = self.__receive_packet(c)
+            if recv_packet_type == Packet.PUBKEY_RESPONSE:
+                if check_solution(recv_message, random_number, rsa_key):
+                    self.__vouch_handler.add_vouch(filename, certname)
+                    self.__send_packet(c, Packet.FILE_SUCCESSFULLY_VOUCHED, "Successfully vouched for {} with {}".format(filename, certname), addr)
+                else:
+                    self.__send_packet(c, Packet.PUBKEY_CHALLENGE_FAILED, "Pubkey challenge failed", addr)
+            else:
+                self.__send_packet(c, Packet.UNEXPECTED_HEADER, "Unexpected {}".format(recv_packet_type), addr)
         except NoFileError as e:
             self.__send_packet(c, Packet.FILE_DOESNT_EXIST, "File does not exist {}".format(filename), addr)
-            return
         except NoCertificateError as e:
             self.__send_packet(c, Packet.CERTIFICATE_DOESNT_EXIST, "Certificate does not exist {}".format(certname), addr)
-            return
-
-        self.__send_packet(c, Packet.FILE_SUCCESSFULLY_VOUCHED, "Successfully vouched for {} with {}".format(filename, certname), addr)
-
-    def __verify_user(self, c, addr, certname):
-        hashed_number, original_number = self.__vouch_handler.get_hashed_verification(certname)
-        #send this and receive
-        print "orig ", original_number, " hashed ", hashed_number
-        self.__send_packet(c, Packet.HASHED_RANDOM_NUMBER, hashed_number, addr)
-        recv_packet_type, recv_message = self.__receive_packet(c)
-        if recv_packet_type == Packet.UNHASED_RANDOM_NUMBER:
-            return self.__vouch_handler.verify_random_number(ord(recv_message), original_number)
-        return false
-
 
     # We pass addr in for future logging
     def __send_packet(self, c, packet_type, message, addr):
