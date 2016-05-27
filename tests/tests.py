@@ -82,15 +82,19 @@ def test_vouch_for_unvouched_file(s):
 
     # First we send a VOUCH_FOR_FILE
     packet = Packet.VOUCH_FOR_FILE + filename_one
+    print "Sending packet: ", repr(packet)
     s.send(packet)
     res = s.recv(2048)
+    print "Received packet: ", repr(res)
     check_packet_header(1, res, Packet.READY_TO_RECEIVE_CERTIFICATE)
 
 
     # Granted we get READY_TO_RECEIVE_CERTIFICATE, we sent the content
     packet = Packet.VOUCH_USING_CERT + certificate_one_content
+    print "Sending packet: ", repr(packet)
     s.send(packet)
     res = s.recv(2048)
+    print "Received packet: ", repr(res)
     check_packet_header(2, res, Packet.FILE_SUCCESSFULLY_VOUCHED)
 
 
@@ -98,8 +102,10 @@ def test_get_singly_vouched_file_with_trust_circle_diameter_one(s):
 
     # First we send a REQUEST_FILE
     packet = Packet.REQUEST_FILE + chr(1) + chr(0) + filename_one
+    print "Sending packet: ", repr(packet)
     s.send(packet)
     res = s.recv(2048)
+    print "Received packet: ", repr(res)
     # Confirm we got START_OF_FILE
     check_packet_header(1, res, Packet.START_OF_FILE)
 
