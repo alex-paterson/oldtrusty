@@ -189,35 +189,19 @@ public class TCPClient {
     
     private void vouchFor() throws IOException
     {       
-        FileInputStream fis = null;
-        File myFile = new File(argStruct.uploadFileName);
-        byte[] buf = new byte[Packet.HEADER_LENGTH + Packet.MAX_NAME_LENGTH];
-        try {
-            fis = new FileInputStream(myFile);
-        } catch (FileNotFoundException ex) {
-            System.out.printf("Could not find certificate\n");
-            return;
-        }
+        startVouchFile(argStruct.fileToVouch, argStruct.uploadFileName);
         
-        buf = new byte[Packet.HEADER_LENGTH + (int)myFile.length()];
-        
-        BufferedInputStream bufInput = new BufferedInputStream(fis);
-        int bufLength = bufInput.read(buf, 0, buf.length);
-        
-        
-        sendPacket(Packet.VOUCH_FOR_FILE, argStruct.fileToVouch);
         byte[] response = readPacket();
         
-        if(isOfType(response, Packet.READY_TO_RECEIVE_CERTIFICATE))
-        {
-            System.out.printf("Sending " + argStruct.uploadFileName + "(" + bufLength + " bytes)");
-            
-            writePacket(addHeader(Packet.VOUCH_USING_CERT.getBytes(), buf, bufLength));
-            response = readPacket();
-        }
-        
         if(isOfType(response, Packet.FILE_SUCCESSFULLY_VOUCHED))
+        {
             System.out.printf("vouched\n");
+            printPacket(response);
+        }
+        else
+        {
+            handleError(response);
+        }
     }
     
     private void listFiles() throws IOException
@@ -234,8 +218,13 @@ public class TCPClient {
         }   
         else
         {
-           //Error
+           printPacket(response);
         }
+    }
+    
+    private void printPacket(byte[] response)
+    {
+        System.out.printf("%s\n", new String(stripHeader(response), java.nio.charset.StandardCharsets.UTF_8));
     }
     
     private void sendPacket(String header, String message) throws IOException
@@ -251,6 +240,21 @@ public class TCPClient {
         
         writePacket(packet);
     }
+    /*
+    32bytes filename
+    32bytes certname    
+    */
+    private void startVouchFile(String filename, String certname) throws IOException
+    {
+        byte[] buf = new byte[2*Packet.MAX_NAME_LENGTH];
+        
+        System.arraycopy(filename.getBytes(), 0, buf, 0, filename.length());
+        System.arraycopy(certname.getBytes(), 0, buf, Packet.MAX_NAME_LENGTH, certname.length());
+        
+        sendPacket(Packet.VOUCH_FOR_FILE,  buf);
+    }
+    
+    
     
     private boolean startDownloadFile() throws IOException
     {
@@ -307,6 +311,13 @@ public class TCPClient {
         return buf;
     }
     
+    private byte[] bufferString(String s)
+    {
+        byte[] buf = new byte[Packet.MAX_NAME_LENGTH];
+        System.arraycopy(s.getBytes(), 0, buf, 0, s.length());
+        return buf;
+    }
+    
     private void openSocket() throws IOException
     {   
         TrustManager[] trustAllCerts = new TrustManager[] {new X509TrustManager() {
@@ -332,6 +343,16 @@ public class TCPClient {
         socket = (SSLSocket) f.createSocket(argStruct.hostIP, argStruct.hostPort);
         
         prepareStreams();
+    }
+    
+    private void handleError(byte[] response)
+    {
+        printPacket(response);
+        if(isOfType(response, Packet.CERTIFICATE_DOESNT_EXIST)) {
+            System.out.printf("Certificate doesn't exist\n");
+        } else if(isOfType(response, Packet.FILE_DOESNT_EXIST)) {
+            System.out.printf("File doesn't exist\n");
+        }
     }
     
     private boolean isOfType(byte[] packet, String header)

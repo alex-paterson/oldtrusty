@@ -18,14 +18,16 @@ public class Packet {
     public static final String READY_TO_RECEIVE_PART  = "200";
     
     public static final String CERTIFICATE_PART  = "011";
-    public static final String CERTIFICATE_ALREADY_EXISTS  = "402";
-    public static final String END_OF_CERTIFICATE  = "021";
-    public static final String END_OF_FILE  = "020";
-    public static final String FILE_ALREADY_EXISTS  = "401";
-    
-    public static final String REQUEST_FILE_LIST  = "502";
-    public static final String LIST_PACKET  = "510";
-    
+    public static final String CERTIFICATE_ALREADY_EXISTS = "402";
+    public static final String CERTIFICATE_DOESNT_EXIST = "412";
+    public static final String END_OF_CERTIFICATE = "021";
+    public static final String END_OF_FILE = "020";
+    public static final String FILE_ALREADY_EXISTS = "401";
+    public static final String FILE_DOESNT_EXIST = "411";
+
+    public static final String REQUEST_FILE_LIST = "502";
+    public static final String LIST_PACKET = "510";
+
     public static final String VOUCH_FOR_FILE  = "600";
     public static final String VOUCH_USING_CERT  = "612";
     public static final String READY_TO_RECEIVE_CERTIFICATE  = "611";
