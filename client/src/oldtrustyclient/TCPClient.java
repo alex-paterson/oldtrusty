@@ -14,6 +14,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.io.InputStream;
+import java.math.BigInteger;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
@@ -105,16 +106,24 @@ public class TCPClient {
     
     private void downloadFile() throws IOException
     {
-        if(!startDownloadFile())
+        int length = startDownloadFile();
+        if(length == -1)
             return;
         
-        byte[] response = readPacket();
+        byte[] response = new byte[Packet.FRAME_LENGTH];
+        int gotLength = is.read(response);
         
-        while(isOfType(response, Packet.FILE_PART))
+        if(isOfType(response, Packet.FILE_PART))
         {
-            System.out.printf("%s", new String(stripHeader(response), java.nio.charset.StandardCharsets.UTF_8));
-            writePacket(Packet.READY_TO_RECEIVE_PART.getBytes());
-            response = readPacket();
+            System.out.printf("%s\n", new String(stripHeader(response), java.nio.charset.StandardCharsets.UTF_8));
+            if((gotLength-Packet.HEADER_LENGTH) != length)
+            {
+                System.out.printf("File corrupted\n");
+            }
+        }
+        else
+        {
+            handleError(response);
         }
     }
     
@@ -256,7 +265,7 @@ public class TCPClient {
     
     
     
-    private boolean startDownloadFile() throws IOException
+    private int startDownloadFile() throws IOException
     {
         sendPacket(Packet.REQUEST_FILE,  constructDownloadPacket());
         
@@ -265,14 +274,15 @@ public class TCPClient {
         if(isOfType(response, Packet.START_OF_FILE))
         {
             writePacket(Packet.READY_TO_RECEIVE_PART.getBytes());
-            return true;
+            byte length[] = Arrays.copyOf(stripHeader(response), 4); //4-byte int
+            return new BigInteger(length).intValue();
         }
         else if(isOfType(response, Packet.FILE_NOT_VOUCHED))    
         {       
             System.out.printf("file not vouched\n");
-            return false;
+            return -1;
         }
-        return false;
+        return -1;
     }
     
     /*
