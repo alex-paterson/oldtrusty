@@ -31,14 +31,14 @@ public class TCPClient {
     private InputStream is;
     private OutputStream os;
     
-    public TCPClient(ArgumentStruct argStruct)
+    public TCPClient(ArgumentStruct argStruct) throws IOException
     {
         this.argStruct = argStruct;
         
         openSocket();
     }
     
-    public void go()
+    public void go() throws IOException
     {
         switch(argStruct.mode)
         {
@@ -46,35 +46,40 @@ public class TCPClient {
                 try {
                     sendFile();
                 } catch (IOException ex) {
-                    System.out.printf("File upload failed\n");
+                    System.out.printf("File upload failed: ");
+                    throw(ex);
                 }
                 break;
             case download:
                 try {
                     downloadFile();
                 } catch (IOException ex) {
-                    System.out.printf("File download failed\n");
+                    System.out.printf("File download failed: ");
+                    throw(ex);
                 }
                 break;
             case uploadCertificate:
                 try {
                     sendCertificate();
                 } catch (IOException ex) {
-                    System.out.printf("File upload failed\n");
+                    System.out.printf("File upload failed: ");
+                    throw(ex);
                 }
                 break;
             case listFiles:
                 try {
                     listFiles();
                 } catch (IOException ex) {
-                    System.out.printf("File upload failed\n");
+                    System.out.printf("File upload failed: ");
+                    throw(ex);
                 }
                 break;
             case vouch:
                 try {
                     vouchFor();
                 } catch (IOException ex) {
-                    System.out.printf("File upload failed\n");
+                    System.out.printf("File upload failed: ");
+                    throw(ex);
                 }
                 break;
         }
@@ -92,14 +97,6 @@ public class TCPClient {
     
     private void downloadFile() throws IOException
     {
-     /*   FileOutputStream file = null;
-        try {
-            file = new FileOutputStream(argStruct.downloadFileName);
-        } catch (FileNotFoundException ex) {
-             System.out.printf("Cannot write to file\n");
-             return;
-        }*/
-        
         startDownloadFile();
         
         byte[] response = readPacket();
@@ -265,23 +262,20 @@ public class TCPClient {
     */
     private byte[] constructDownloadPacket()
     {
-        int numNames = argStruct.namesToInclude.size();
-        if(numNames > 10)
-        {
-            System.out.printf("To many names\n");
-            return new byte[1];
-        }
+        int ifNamed = 0;
+        if(argStruct.namesToInclude != null)
+            ifNamed = 1;
         
-        byte[] buf = new byte[3 + argStruct.namesToInclude.size()*Packet.MAX_NAME_LENGTH + Packet.MAX_NAME_LENGTH];
+        byte[] buf = new byte[2 + ifNamed*Packet.MAX_NAME_LENGTH + Packet.MAX_NAME_LENGTH];
         buf[0] = argStruct.circleCircumference;
-        buf[1] = (byte) numNames;
-        for(int i = 0; i < numNames; i++)
+        buf[1] = (byte) ifNamed;
+        for(int i = 0; i < ifNamed; i++)
         {
-            if (argStruct.namesToInclude.get(i).length() > Packet.MAX_NAME_LENGTH) {
+            if (argStruct.namesToInclude.length() > Packet.MAX_NAME_LENGTH) {
                 System.out.printf("Name too long\n");
                 return new byte[1];
             }
-            System.arraycopy(argStruct.namesToInclude.get(i).getBytes(), 0, buf, i*Packet.MAX_NAME_LENGTH + 2, argStruct.namesToInclude.get(i).length());
+            System.arraycopy(argStruct.namesToInclude.getBytes(), 0, buf, i*Packet.MAX_NAME_LENGTH + 2, argStruct.namesToInclude.length());
         }
             
         if(argStruct.downloadFileName.length() > Packet.MAX_NAME_LENGTH)
@@ -290,18 +284,14 @@ public class TCPClient {
             return new byte[1];
         }
             
-        System.arraycopy(argStruct.downloadFileName.getBytes(), 0, buf, numNames*Packet.MAX_NAME_LENGTH + 2, argStruct.downloadFileName.length());
+        System.arraycopy(argStruct.downloadFileName.getBytes(), 0, buf, ifNamed*Packet.MAX_NAME_LENGTH + 2, argStruct.downloadFileName.length());
         return buf;
     }
     
-    private void openSocket()
+    private void openSocket() throws IOException
     {   
-        try {
-            socket = new Socket(argStruct.hostIP, argStruct.hostPort);
-        } catch (IOException ex) {
-            System.out.printf("Could not connect to host\n");
-        }   
-        
+        socket = new Socket(argStruct.hostIP, argStruct.hostPort);
+        //    System.out.printf("Could not connect to host\n");
         
         prepareStreams();
     }

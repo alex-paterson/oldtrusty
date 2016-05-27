@@ -37,11 +37,13 @@ public class ArgParser {
         String downloadFileName;
         String fileToVouch;
         
+        boolean ifHostSet;
         InetAddress hostIP;
         int hostPort;
         
-        List<String> namesToInclude;
+        String namesToInclude;
         byte circleCircumference;
+        boolean ifCircleSet;
     }
     
     ArgumentStruct argStruct;
@@ -54,10 +56,9 @@ public class ArgParser {
         //Setting defaults
         argStruct.circleCircumference = 1;
         argStruct.mode = Mode.unset;
-        //argStruct.hostIP = InetAddress.getByName("192.168.0.132");
-       // argStruct.hostPort = 3002;
-        
-        argStruct.namesToInclude = new ArrayList<>();
+        argStruct.ifHostSet = false;
+        argStruct.ifCircleSet = false;
+        argStruct.namesToInclude = null;
         
         parser = ArgumentParsers.newArgumentParser("oldTrustyClient")
                 .description("Client interface to oldTrusty program.");
@@ -77,8 +78,8 @@ public class ArgParser {
                 .action(Arguments.storeTrue())
                 .help("List files on server");
         parser.addArgument("-n")
-                .help("Names to include in circle of trust")
-                .metavar("name ...")
+                .help("Name to include in circle of trust")
+                .metavar("name")
                 .type(String.class);
         parser.addArgument("-c")
                 .help("Required length of circle of trust")
@@ -87,12 +88,32 @@ public class ArgParser {
         parser.addArgument("-v")
                 .help("Vouch for file on server using certificate")
                 .nargs(2)
-                .metavar("file certificate")
+                .metavar("filename")
                 .type(String.class);
         parser.addArgument("--host")
                 .help("Host address and port")
                 .metavar("host:port")
                 .type(String.class);
+    }
+    
+    private void checkIfValidArgs()
+    {
+        if(argStruct.mode == Mode.unset)
+        {
+            throw new IllegalArgumentException("Invalid argument combination");
+        }
+        if(!argStruct.ifHostSet)
+        {
+            throw new IllegalArgumentException("Need host address");
+        }
+        if(!argStruct.ifHostSet)
+        {
+            throw new IllegalArgumentException("Need host address");
+        }
+        if(!argStruct.ifCircleSet)
+        {
+            System.out.printf("Using default trust circle cirumference of %d\n", (int) argStruct.circleCircumference);
+        }
     }
     
     public ArgumentStruct parse(String[] args) throws UnknownHostException, ArgumentParserException
@@ -106,6 +127,8 @@ public class ArgParser {
             parser.handleError(e);
             System.exit(1);
         }
+        
+        checkIfValidArgs();
 
         return argStruct;
     }
@@ -146,7 +169,7 @@ public class ArgParser {
         }
         if((obj = res.get("n")) != null)
         {
-                argStruct.namesToInclude.add((String)obj);
+                argStruct.namesToInclude = (String) obj;
         }
         if((obj = res.get("c")) != null)
         {
@@ -154,6 +177,8 @@ public class ArgParser {
 
             if (argStruct.circleCircumference < 1)
                 throw new IllegalArgumentException("Illegal circumference:");
+            
+            argStruct.ifCircleSet = true;
         }
         
         if((obj = res.get("host")) != null)
@@ -165,7 +190,9 @@ public class ArgParser {
             }
 
             argStruct.hostIP = InetAddress.getByName(ip[0]);
-            argStruct.hostPort = java.lang.Integer.getInteger(ip[1], 3002);
+            argStruct.hostPort = java.lang.Integer.parseInt(ip[1]);
+            
+            argStruct.ifHostSet = true;
         }
     }
     
@@ -175,5 +202,10 @@ public class ArgParser {
         {
             throw new IllegalArgumentException("Invalid argument combination");
         }        
+    }
+    
+    public void printHelp()
+    {
+        parser.printHelp();
     }
 }
