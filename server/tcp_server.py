@@ -166,7 +166,7 @@ class TCPServer:
 
         if desired_circumference > circum:
             self.__send_packet(c, Packet.FILE_NOT_VOUCHED,
-                               "Only {} people have vouched for this file.".format(circum), addr)
+                               "Longest trust circle is of length {}".format(circum), addr)
         else:
             file_content = open(os.path.join(self.__files_path, filename), 'r').read()
             file_content_length = length_in_binary(file_content)
