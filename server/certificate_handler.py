@@ -22,6 +22,11 @@ class CertificateHandler:
 
                 self.__add_trust(subject, issuer)
 
+    def reload_certificates(self):
+        print "Reloading certificates"
+        self.__trust_list = {}
+        self.__load_certificates()
+
     def __add_trust(self, subject, trustedBy):
         print subject, "trusted by", trustedBy
 

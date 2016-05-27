@@ -51,6 +51,9 @@ class VouchHandler:
     def list_vouches(self, filename):
         if filename in self.__fileList:
             print "list: ", self.__fileList[filename]
-            return '\n'.join(self.__fileList[filename])
+            return '\n'.join(str(self.__fileList[filename]))
         else:
             return "not found"
+
+    def reload_certificates(self):
+        self.__certHandler.reload_certificates()

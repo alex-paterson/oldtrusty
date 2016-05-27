@@ -150,6 +150,7 @@ class TCPServer:
                 resp_packet_type, resp_message = self.__append_certificate(filename, recv_message)
                 # sends status and message back
                 self.__send_packet(c, resp_packet_type, resp_message, addr)
+                self.__vouch_handler.reload_certificates()
             else:
                 self.__send_packet(c, Packet.UNEXPECTED_HEADER, "Unexpected {}".format(recv_packet_type), addr)
 
@@ -187,7 +188,7 @@ class TCPServer:
         for filename in listDir:
             out = out + "Filename: \n" + filename
             out = out + "\nVouched by: \n" + self.__vouch_handler.list_vouches(filename)
-            out = out + "Length of: " + str(self.__vouch_handler.get_circle_length(filename, ""))
+            out = out + "Length of: " + str(self.__vouch_handler.get_circle_length(filename, "")) + "\n"
 
         self.__send_packet(c, Packet.FILE_LIST, out, addr)
 
