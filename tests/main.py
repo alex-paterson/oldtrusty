@@ -40,7 +40,20 @@ test(test_get_singly_vouched_file_with_trust_circle_diameter_one_and_name, s)
 
 test(test_vouch_for_singly_vouched_file, s)
 
-test(test_get_doubly_vouched_diameter_one_file_with_trust_circle_diameter_two, s)
-
+test(test_get_diameter_one_file_with_trust_circle_diameter_two, s)
 
 test(test_vouch_for_doubly_vouched_file, s)
+
+test(test_get_file_with_trust_circle_diameter_two_and_name, s)
+
+test(test_get_diameter_two_file_with_trust_circle_diameter_three_and_name, s)
+
+test(test_get_incomplete_diameter_three_file_with_trust_circle_diameter_three, s)
+
+test(test_get_incomplete_diameter_three_file_with_trust_circle_diameter_three_2, s)
+
+test(test_get_diameter_three_file_with_trust_circle_diameter_three, s)
+
+test(test_get_diameter_three_file_with_trust_circle_diameter_three_and_name, s)
+
+test(test_get_diameter_three_file_with_trust_circle_diameter_four, s)

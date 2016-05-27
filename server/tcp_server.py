@@ -138,7 +138,6 @@ class TCPServer:
         # Calls __create_file which returns a status and message
         resp_packet_type, resp_message = self.__create_certificate(filename)
         # sends status and message back
-        print "WHYY", resp_packet_type, resp_message
         self.__send_packet(c, resp_packet_type, resp_message, addr)
         # if status is ready, then enter loop
         if resp_packet_type == Packet.READY_TO_RECEIVE_CERTIFICATE:
