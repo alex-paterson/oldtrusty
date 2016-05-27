@@ -10,9 +10,9 @@ class CertificateHandler:
         self.__load_certificates()
 
     def __load_certificates(self):
-        for file in os.listdir(self.__certificate_path):
-            print "CERTIFICATE:", file
-            self.__load(self.__certificate_path + file)
+        for f in os.listdir(self.__certificate_path):
+            print "CERTIFICATE:", f
+            self.__load(self.__certificate_path + f)
 
     def __load(self, filename):
         c = open(filename, 'rt').read()

@@ -19,7 +19,7 @@ class VouchHandler:
             self.add_file(filename.strip())
 
     def add_file(self, filename):
-        self.__fileList[filename] = File()
+        self.__fileList[filename] = []
 
     # For now just use common name as ID
     def add_vouch(self, filename, certname):
@@ -45,14 +45,14 @@ class VouchHandler:
 
     def get_circle_length(self, filename, name_to_include):
         if self.does_file_exist(filename):
-            vouches = self.__fileList[filename].getVouches()
+            vouches = self.__fileList[filename]
             return self.__certHandler.get_length_including(vouches, name_to_include)
         else:
             raise NoFileError("File does not exist {}".format(filename))
 
     def list_vouches(self, filename):
         if filename in self.__fileList:
-            print "list: ", self.__fileList[filename].getVouches()
-            return '\n'.join(self.__fileList[filename].getVouches())
+            print "list: ", self.__fileList[filename]
+            return '\n'.join(self.__fileList[filename]
         else:
             return "not found"
