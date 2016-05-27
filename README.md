@@ -1,4 +1,6 @@
-Requires swig: `brew install swig` and openSSL: `brew install swig`
+# Dependencies
+
+See requirements.txt - M2Crypto requires swig on OSX: `brew install swig` and openSSL: `brew install swig`
 
 # Notes
 
