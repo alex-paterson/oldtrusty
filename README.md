@@ -73,7 +73,7 @@ To generate CSR:
 openssl req -new -sha256 -key test.key -out 2.csr
 ```
 
-To display who signed the certificate:
+To display who signed the certificate: 
 
 ```
 openssl x509 -text -noout -in 1.crt
