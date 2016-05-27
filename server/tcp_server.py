@@ -36,17 +36,19 @@ class Packet:
     FILE_LIST = '510'
 
     VOUCH_FOR_FILE  = '600'
-    VOUCH_USING_CERT  = '612'
+    # 030-<file-length[4]>-<filename[MAX_NAME_LENGTH]>
     READY_TO_RECEIVE_CERTIFICATE  = '611'
+    VOUCH_USING_CERT  = '612'
+    # 011-<content[CERTIFICATE_LENGTH]>
 
     FILE_SUCCESSFULLY_VOUCHED  = '601'
     FILE_NOT_VOUCHED = '602'
 
     MAX_NAME_LENGTH = 32
+    CERTIFICATE_LENGTH = 908
 
 
 class TCPServer:
-
 
     def __init__(self, host='127.0.0.1', port=3002):
         self.__host = host
@@ -291,12 +293,9 @@ class TCPServer:
     # Creates the file
     def __create_file(self, filename):
         filepath = os.path.join(self.__files_path, filename)
-        if not os.path.isfile(filepath):
-            with open(filepath, 'w+') as open_file:
-                self.__vouch_handler.add_file(filename)
-                return Packet.READY_TO_RECEIVE, "File successfully created"
-        else:
-            return Packet.FILE_ALREADY_EXISTS, "File already exists"
+        with open(filepath, 'w+') as open_file:
+            self.__vouch_handler.add_file(filename)
+            return Packet.READY_TO_RECEIVE, "File successfully created"
 
     # Creates the file
     def __append_file(self, filename, contents):
