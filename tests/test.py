@@ -19,15 +19,17 @@ def test(function, s):
 
 def check_packet_header(test_num, res, expected_header):
     res_code = res[0:3]
+    body = res[3:]
     if res_code != expected_header:
-        raise ValueError("{}. expected response code of {}, got {}".format(test_num, repr(expected_header), repr(res_code)))
+        raise ValueError("{}. expected response code of {}, got {}: {}".format(test_num, repr(expected_header), repr(res_code), repr(body)))
     else:
         print u"{}\u2713{} PASS: HEADER:".format(bcolors.OKGREEN, bcolors.ENDC), repr(res[3:])
 
 
 def check_packet_body(test_num, res, expected_body):
+    res_code = res[0:3]
     body = res[3:]
     if body != expected_body:
-        raise ValueError("{}. expected body of {}, got {}".format(test_num, repr(expected_body), repr(body)))
+        raise ValueError("{}. expected body of {}, got {} {}".format(test_num, repr(expected_body), repr(res_code), repr(body)))
     else:
         print u"{}\u2713{} PASS: BODY:".format(bcolors.OKGREEN, bcolors.ENDC), repr(res[3:])

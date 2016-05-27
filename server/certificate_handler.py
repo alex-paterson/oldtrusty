@@ -36,7 +36,7 @@ class CertificateHandler:
         start = vouchList[0]
         print "Checking vouches, including - ", name_to_include, "- starting at", start
 
-        if len(name_to_include) == 0:
+        if not name_to_include or len(name_to_include) == 0:
             if_named = True
         else:
             if_named = False

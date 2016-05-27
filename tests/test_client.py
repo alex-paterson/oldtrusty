@@ -4,12 +4,9 @@ host = '127.0.0.1'
 port = 3002
 #
 s = socket.socket()
-# <<<<<<< HEAD
 # ssl_soc = ssl.wrap_socket(s, cert_reqs=ssl.CERT_REQUIRED)
-# =======
 ssl_soc = ssl.wrap_socket(s)
 
-# >>>>>>> origin/master
 ssl_soc.connect((host,port))
 
 
