@@ -25,7 +25,7 @@ class VouchHandler:
         if self.does_cert_exist(certname):
             if self.does_file_exist(filename):
                 name = self.__certHandler.get_certificate_subject(certname)
-                self.__fileList[filename].addVouch(name)
+                self.__fileList[filename].append(name)
                 print str(name) + " vouched for" + filename
             else:
                 raise NoFileError("No such filename: " + filename)
