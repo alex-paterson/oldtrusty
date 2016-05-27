@@ -7,8 +7,7 @@ from test import check_packet_header, check_packet_body
 file_one_content = "I'm a file full of good stuff."
 filename_one = "{}.txt".format(''.join([random.choice('abcdefghijk123') for _ in range(10)]))
 
-
-# certificate_one_content = read_in_file('files/1/test.cert')
+certificate_one_content = read_in_file('files/A/A.cert')
 
 def test_add_new_file(s):
 
@@ -79,17 +78,37 @@ def test_get_unvouched_file_with_trust_circle_diameter_one(s):
     check_packet_header(1, res, Packet.FILE_NOT_VOUCHED)
 
 
-def test_add_new_certificate(s):
+def test_vouch_for_unvouched_file(s):
 
-    # First we send a START_OF_CERTIFICATE
-    packet = Packet.START_OF_CERTIFICATE + length_in_binary(file_one_content) + filename_one
+    # First we send a VOUCH_FOR_FILE
+    packet = Packet.VOUCH_FOR_FILE + filename_one
     s.send(packet)
     res = s.recv(2048)
-    check_packet_header(1, res, Packet.READY_TO_RECEIVE)
+    check_packet_header(1, res, Packet.READY_TO_RECEIVE_CERTIFICATE)
 
 
-    # Granted we get READY_TO_RECEIVE, we sent the content
-    packet = Packet.FILE_CONTENT + file_one_content
+    # Granted we get READY_TO_RECEIVE_CERTIFICATE, we sent the content
+    packet = Packet.VOUCH_USING_CERT + certificate_one_content
     s.send(packet)
     res = s.recv(2048)
-    check_packet_header(2, res, Packet.SUCCESSFULLY_ADDED)
+    check_packet_header(2, res, Packet.FILE_SUCCESSFULLY_VOUCHED)
+
+
+def test_get_singly_vouched_file_with_trust_circle_diameter_one(s):
+
+    # First we send a REQUEST_FILE
+    packet = Packet.REQUEST_FILE + chr(1) + chr(0) + filename_one
+    s.send(packet)
+    res = s.recv(2048)
+    # Confirm we got START_OF_FILE
+    check_packet_header(1, res, Packet.START_OF_FILE)
+
+    file_length = ascii_to_length(res[3:8])
+
+    # First we send a REQUEST_FILE
+    packet = Packet.READY_TO_RECEIVE
+    s.send(packet)
+    res = s.recv(file_length)
+    # Confirm we got START_OF_FILE
+    check_packet_header(2, res, Packet.FILE_CONTENT)
+    check_packet_content(3, res, file_one_content)

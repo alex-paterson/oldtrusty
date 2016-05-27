@@ -4,6 +4,7 @@ import subprocess
 import socket
 import ssl
 from vouch_handler import VouchHandler
+from helpers import ascii_to_length, length_in_binary
 
 
 INITIAL_RECV_LENGTH = 2048
@@ -40,10 +41,10 @@ class Packet:
     FILE_LIST = '510'
 
     VOUCH_FOR_FILE  = '600'
-    # 030-<file-length[4]>-<filename[MAX_NAME_LENGTH]>
+    # 600-<filename[MAX_NAME_LENGTH]>
     READY_TO_RECEIVE_CERTIFICATE  = '611'
     VOUCH_USING_CERT  = '612'
-    # 011-<content[CERTIFICATE_LENGTH]>
+    # 612-<content[CERTIFICATE_LENGTH]>
 
     FILE_SUCCESSFULLY_VOUCHED  = '601'
     FILE_NOT_VOUCHED = '602'
@@ -196,7 +197,9 @@ class TCPServer:
                                "Only {} people have vouched for this file.".format(circum), addr)
         else:
             file_content = open(os.path.join(self.__files_path, filename), 'r').read()
-            file_content_length = chr(len(file_content))
+            file_content_length = length_in_binary(file_content)
+            # file_content_length = chr(len(file_content))
+
             # Send START_OF_FILE
             self.__send_packet(c, Packet.START_OF_FILE, file_content_length, addr)
             # Receive READY_TO_RECEIVE
@@ -220,13 +223,14 @@ class TCPServer:
 
     def __handle_vouch(self, c, addr, filename):
         # Get certificate:
-        self.__send_packet(c, Packet.READY_TO_RECEIVE_CERTIFICATE, "", addr)
+        self.__send_packet(c, Packet.READY_TO_RECEIVE_CERTIFICATE, "Ready to receive certificate", addr)
 
         recv_packet_type, certificate = self.__receive_packet(c)
         if recv_packet_type == Packet.VOUCH_USING_CERT:
             self.__vouch_handler.add_vouch(filename, certificate)
-
-            self.__send_packet(c, Packet.FILE_SUCCESSFULLY_VOUCHED, "", addr)
+            self.__send_packet(c, Packet.FILE_SUCCESSFULLY_VOUCHED, "Successfully vouched for {}".format(filename), addr)
+        else:
+            self.__send_packet(c, Packet.UNEXPECTED_HEADER, "Unexpected {}".format(recv_packet_type), addr)
 
     # We pass addr in for future logging
     def __send_packet(self, c, packet_type, message, addr):
@@ -266,11 +270,7 @@ class TCPServer:
     def __interpret_start_of_file(self, message):
         length_ascii = message[0:4]
         filename = message[4:]
-        length = 1
-        for c in length_ascii:
-            if c == chr(0):
-                break
-            length *= ord(c)
+        length = ascii_to_length(length_ascii)
         return length, filename
 
     # Shrinks the filename found in packet down to letters only (could be done better)
