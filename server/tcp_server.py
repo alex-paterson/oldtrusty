@@ -1,4 +1,4 @@
-import sys, shlex, socket, subprocess, atexit, os
+import sys, shlex, socket, subprocess, atexit, os, ssl
 from vouch_handler import VouchHandler
 
 
@@ -68,7 +68,10 @@ class TCPServer:
         while True:
             c, addr = self.s.accept()
             print("\n\n\n$ Connection from {} accepted\n".format(addr))
-            self.__receive_first_packet_from_connection(c, addr)
+
+            ssl_soc = ssl.wrap_socket(c, server_side=True, certfile="server.crt", keyfile="server.key")
+
+            self.__receive_first_packet_from_connection(ssl_soc, addr)
 
     # Connections and basic communication
 

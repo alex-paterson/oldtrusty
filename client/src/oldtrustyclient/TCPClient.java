@@ -14,9 +14,17 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.io.InputStream;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 /**
  *
@@ -27,7 +35,7 @@ public class TCPClient {
     
     
     private ArgumentStruct argStruct;
-    private Socket socket;        
+    private SSLSocket socket;        
     private InputStream is;
     private OutputStream os;
     
@@ -290,8 +298,27 @@ public class TCPClient {
     
     private void openSocket() throws IOException
     {   
-        socket = new Socket(argStruct.hostIP, argStruct.hostPort);
-        //    System.out.printf("Could not connect to host\n");
+        TrustManager[] trustAllCerts = new TrustManager[] {new X509TrustManager() {
+                public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                    return null;
+                }
+                public void checkClientTrusted(X509Certificate[] certs, String authType) {
+                }
+                public void checkServerTrusted(X509Certificate[] certs, String authType) {
+                }
+            }
+        };
+        
+        SSLContext sc = null;
+        try {
+            sc = SSLContext.getInstance("SSL");
+            sc.init(null, trustAllCerts, new java.security.SecureRandom());
+        } catch (NoSuchAlgorithmException | KeyManagementException ex) {
+            System.out.printf(ex.getLocalizedMessage());
+        }
+        
+        SSLSocketFactory f = sc.getSocketFactory();
+        socket = (SSLSocket) f.createSocket(argStruct.hostIP, argStruct.hostPort);
         
         prepareStreams();
     }
