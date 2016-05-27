@@ -9,7 +9,6 @@ class CertificateHandler:
         self.__trust_list = {}
         self.__pubkey_list = {}
         self.__load_certificates()
-        self.__check_pubkeys()
 
     def __load_certificates(self):
         for f in os.listdir(self.__certificate_path):
@@ -23,13 +22,11 @@ class CertificateHandler:
                 issuer = self.__ID(cert.get_issuer())
 
                 self.__add_trust(subject, issuer)
-                self.__add_pubkey(subject, cert)
 
     def reload_certificates(self):
         print "Reloading certificates"
         self.__trust_list = {}
         self.__load_certificates()
-        self.__check_pubkeys()
 
     def __add_trust(self, subject, trustedBy):
         print subject, "trusted by", trustedBy
@@ -38,42 +35,6 @@ class CertificateHandler:
             self.__trust_list[subject].append(trustedBy)
         else:
             self.__trust_list[subject] = [trustedBy]
-
-    def __add_pubkey(self, subject, cert):
-        pubkey = cert.get_pubkey()
-
-        if subject in self.__pubkey_list:
-            self.__pubkey_list[subject].append(pubkey)
-        else:
-            self.__pubkey_list[subject] = [pubkey]
-
-    def __check_pubkeys(self):
-        print "checking pubkeys"
-        for subject in self.__pubkey_list:
-            first_pubkey = self.__pubkey_list[subject][0]
-            print self.__pubkey_list
-            for pubkey in self.__pubkey_list[subject]:
-                if first_pubkey != pubkey:
-                    print "Pubkeys do not match"
-
-    def pubkey_from_certificate(self, certname):
-        filename = os.path.join(self.__certificate_path, certname)
-        with open(filename, 'rt') as cf:
-            c = cf.read()
-            cert = crypto.load_certificate(crypto.FILETYPE_PEM, c)
-            given_pubkey = cert.get_pubkey()
-            subject = self.__ID(cert.get_subject())
-
-        if given_pubkey != self.__pubkey_for(subject):
-            print "error, inconsistent pubkey"
-            return given_pubkey
-        return pubkey
-
-    def __pubkey_for(self, subject):
-        if subject in self.__pubkey_list:
-            print "got pubkey"
-            return self.__pubkey_list[subject][0]
-        return 0
 
     def get_max_circle_length_including(self, vouchList, name_to_include):
         if len(vouchList) == 0:

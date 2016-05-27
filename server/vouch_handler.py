@@ -1,20 +1,16 @@
 import os
+from M2Crypto import X509
+
+
 from .certificate_handler import CertificateHandler
 from .exceptions import *
-from .signing import sign_data_with_pubkey
 
 class VouchHandler:
     def __init__(self, file_path, certificate_path):
         self.__certHandler = CertificateHandler(certificate_path)
         self.__files_path = file_path
-        self.__fileList = {}
-        self.__add_existing_files()
-
-    def __add_existing_files(self):
-        listDir = os.listdir(self.__files_path)
-
-        for filename in listDir:
-            self.add_file(filename.strip())
+        self.__certificates_path = certificate_path
+        self.__fileList = { x.strip() : [] for x in os.listdir(self.__files_path)}
 
     def add_file(self, filename):
         self.__fileList[filename] = []
@@ -28,6 +24,19 @@ class VouchHandler:
                 raise NoFileError("No such filename: " + filename)
         else:
             raise NoCertificateError("No such certificate: " + certname)
+
+    def get_pubkey_from_certname(self, certname):
+        if not self.does_cert_exist(certname):
+            raise NoCertificateError("No such certificate: " + certname)
+        else:
+            try:
+                with open(os.path.join(self.__certificates_path, certname)) as certf:
+                    data = certf.read()
+                    cert = X509.load_cert_string(data, X509.FORMAT_PEM)
+                    pub_key = cert.get_pubkey()
+                    return pub_key.get_rsa()
+            except IOError as err:
+                raise NoCertificateError("Could not open certificate: " + certname)
 
     def does_file_exist(self, filename):
         return os.path.isfile(os.path.join(os.path.dirname(os.path.realpath(__file__)),
@@ -54,17 +63,3 @@ class VouchHandler:
 
     def reload_certificates(self):
         self.__certHandler.reload_certificates()
-
-    def get_hashed_verification(self, certname):
-        if self.does_cert_exist(certname):
-            random_number = "1"
-            pubkey = self.__certHandler.pubkey_from_certificate(certname)
-            hashed_number = sign_data_with_pubkey(random_number, pubkey)
-            return hashed_number, random_number
-        else:
-            raise NoCertificateError("File does not exist {}".format(certname))
-
-    def verify_random_number(self, returned_number, original_number):
-        if returned_number == original_number:
-            return true
-        return false

@@ -1,3 +1,5 @@
+Requires swig: `brew install swig` and openSSL: `brew install swig`
+
 # Notes
 
 ✗

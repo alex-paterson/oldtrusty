@@ -2,7 +2,7 @@ class Packet:
     START_OF_FILE = '000'
     # 000-<file-length[4]>-<filename[MAX_NAME_LENGTH]>
     START_OF_CERTIFICATE = '001'
-    # 001-<file-length[4]>-<filename[MAX_NAME_LENGTH]>
+    # 001-<filename[MAX_NAME_LENGTH]>
 
     FILE_CONTENT = '010'
     # 010-<content[PRE-ESTABLISHED]>
@@ -29,10 +29,18 @@ class Packet:
     FILE_LIST = '510'
 
     VOUCH_FOR_FILE  = '600'
+    # 600-<filename[MAX_NAME_LENGTH]>
     READY_TO_RECEIVE_CERTIFICATE  = '611'
     VOUCH_USING_CERT  = '612'
+
+    PUBKEY_CHALLENGE = '605'
+    PUBKEY_RESPONSE = '606'
+    PUBKEY_CHALLENGE_FAILED = '607'
+
+    # 612-<content[CERTIFICATE_LENGTH]>
 
     FILE_SUCCESSFULLY_VOUCHED  = '601'
     FILE_NOT_VOUCHED = '602'
 
     MAX_NAME_LENGTH = 32
+    CERTIFICATE_LENGTH = 908
