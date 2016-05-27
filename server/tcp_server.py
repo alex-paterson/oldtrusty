@@ -166,7 +166,7 @@ class TCPServer:
 
         if desired_circumference > circum:
             self.__send_packet(c, Packet.FILE_NOT_VOUCHED,
-                               "Only {} people have vouched for this file.".format(circum), addr)
+                               "Maximum trust circle of length {} users have vouched for this file.".format(circum), addr)
         else:
             file_content = open(os.path.join(self.__files_path, filename), 'r').read()
             file_content_length = length_in_binary(file_content)
@@ -207,9 +207,10 @@ class TCPServer:
 
         self.__send_packet(c, Packet.FILE_SUCCESSFULLY_VOUCHED, "Successfully vouched for {} with {}".format(filename, certname), addr)
 
-    def __verify_user(c, addr, certname):
+    def __verify_user(self, c, addr, certname):
         hashed_number, original_number = self.__vouch_handler.get_hashed_verification(certname)
         #send this and receive
+        print "orig ", original_number, " hashed ", hashed_number
         self.__send_packet(c, Packet.HASHED_RANDOM_NUMBER, hashed_number, addr)
         recv_packet_type, recv_message = self.__receive_packet(c)
         if recv_packet_type == Packet.UNHASED_RANDOM_NUMBER:
