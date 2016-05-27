@@ -151,7 +151,7 @@ def test_get_singly_vouched_file_with_trust_circle_diameter_one(s):
     print "Sending packet: ", repr(packet)
     print "File length: ", file_length
     s.send(packet)
-    res = s.recv(file_length)
+    res = s.recv(file_length+3)
     print "Received packet: ", repr(res)
     # Confirm we got START_OF_FILE
     check_packet_header(2, res, Packet.FILE_CONTENT)
