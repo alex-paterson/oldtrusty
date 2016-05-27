@@ -39,7 +39,7 @@ public class OldTrustyClient {
         try {
             TCPClient client = new TCPClient(argStruct);
             client.go();
-        } catch (IOException ex) {
+        } catch (IOException | ClassNotFoundException ex) {
             System.out.printf(ex.getLocalizedMessage());
             System.out.printf("\n");
         }

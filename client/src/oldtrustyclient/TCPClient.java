@@ -14,18 +14,27 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.math.BigInteger;
+import java.security.InvalidKeyException;
+import java.security.Key;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.crypto.BadPaddingException;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import static sun.security.x509.CertificateAlgorithmId.ALGORITHM;
 
 /**
  *
@@ -47,7 +56,7 @@ public class TCPClient {
         openSocket();
     }
     
-    public void go() throws IOException
+    public void go() throws IOException, ClassNotFoundException
     {
         switch(argStruct.mode)
         {
@@ -196,11 +205,17 @@ public class TCPClient {
         writePacket(Packet.END_OF_FILE.getBytes());
     }
     
-    private void vouchFor() throws IOException
+    private void vouchFor() throws IOException, ClassNotFoundException
     {       
         startVouchFile(argStruct.fileToVouch, argStruct.uploadFileName);
         
         byte[] response = readPacket();
+        
+        if(isOfType(response, Packet.HASHED_RANDOM_NUMBER))
+        {
+            doVerification(response);
+            response = readPacket();
+        }
         
         if(isOfType(response, Packet.FILE_SUCCESSFULLY_VOUCHED))
         {
@@ -249,6 +264,7 @@ public class TCPClient {
         
         writePacket(packet);
     }
+    
     /*
     32bytes filename
     32bytes certname    
@@ -390,4 +406,47 @@ public class TCPClient {
         is.read(packet);
         return packet;
     }
+    
+    private void doVerification(byte[] response) throws IOException, ClassNotFoundException
+    {
+        byte[] data = stripHeader(response);
+        byte[] realData = decryptData(data);
+        System.out.printf("%s\n", new String(realData, java.nio.charset.StandardCharsets.UTF_8));
+    }
+    
+    private byte[] decryptData(byte[] data) throws IOException, ClassNotFoundException
+    {
+        Cipher cipher = null;
+        try {
+            cipher = Cipher.getInstance(ALGORITHM);
+        } catch (NoSuchAlgorithmException ex) {
+            Logger.getLogger(TCPClient.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (NoSuchPaddingException ex) {
+            Logger.getLogger(TCPClient.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        PrivateKey privKey = loadPrivateKey();
+        try {
+            cipher.init(Cipher.DECRYPT_MODE, privKey);
+        } catch (InvalidKeyException ex) {
+            Logger.getLogger(TCPClient.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+        try {
+            return cipher.doFinal(data);
+        } catch (IllegalBlockSizeException ex) {
+            Logger.getLogger(TCPClient.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (BadPaddingException ex) {
+            Logger.getLogger(TCPClient.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return new byte[2];
+    }
+    
+    private PrivateKey loadPrivateKey() throws IOException, ClassNotFoundException
+    {
+        ObjectInputStream in = new ObjectInputStream(new FileInputStream("priv.key"));
+        return (PrivateKey) in.readObject();
+    }
+    
+    
+    
 }

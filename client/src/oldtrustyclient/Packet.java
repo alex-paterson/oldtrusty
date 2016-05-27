@@ -32,6 +32,8 @@ public class Packet {
     public static final String VOUCH_USING_CERT  = "612";
     public static final String READY_TO_RECEIVE_CERTIFICATE  = "611";
     public static final String FILE_SUCCESSFULLY_VOUCHED = "601";
+    public static final String HASHED_RANDOM_NUMBER = "605";
+    public static final String UNHASHED_RANDOM_NUMBER = "606";
     
     public static final String FILE_NOT_VOUCHED = "602";
     
