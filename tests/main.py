@@ -26,4 +26,6 @@ test(test_add_new_certificate, s)
 
 test(test_vouch_for_nonexistent_file, s)
 
+test(test_vouch_for_unvouched_file, s)
+
 test(test_get_singly_vouched_file_with_trust_circle_diameter_one, s)

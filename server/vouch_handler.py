@@ -26,6 +26,7 @@ class VouchHandler:
             if self.does_file_exist(filename):
                 name = self.__certHandler.get_certificate_subject(certname)
                 self.__fileList[filename].append(name)
+                print("111111 __fileList", self.__fileList)
                 print str(name) + " vouched for" + filename
             else:
                 raise NoFileError("No such filename: " + filename)
@@ -45,6 +46,7 @@ class VouchHandler:
     def get_circle_length(self, filename, name_to_include):
         if self.does_file_exist(filename):
             vouches = self.__fileList[filename]
+            print("22222222 __fileList", self.__fileList)
             return self.__certHandler.get_length_including(vouches, name_to_include)
         else:
             raise NoFileError("File does not exist {}".format(filename))

@@ -1,7 +1,7 @@
 import random
 
 from packet import Packet
-from helpers import length_in_binary, read_in_file, buffer_name, unbuffer_name
+from helpers import length_in_binary, ascii_to_length, read_in_file, buffer_name, unbuffer_name
 from test import check_packet_header, check_packet_body
 
 file_one_content = "I'm a file full of good stuff."
@@ -114,12 +114,24 @@ def test_add_new_certificate(s):
 def test_vouch_for_nonexistent_file(s):
 
     # First we send a VOUCH_FOR_FILE
-    packet = Packet.VOUCH_FOR_FILE + buffer_name("i_do_not_exist.cert") + buffer_name(certificate_one_name)
+    packet = Packet.VOUCH_FOR_FILE + buffer_name("i_do_not_exist.txt") + buffer_name(certificate_one_name)
     print "Sending packet: ", repr(packet)
     s.send(packet)
     res = s.recv(2048)
     print "Received packet: ", repr(res)
     check_packet_header(1, res, Packet.FILE_DOESNT_EXIST)
+
+
+def test_vouch_for_unvouched_file(s):
+
+    # First we send a VOUCH_FOR_FILE
+    packet = Packet.VOUCH_FOR_FILE + buffer_name(filename_one) + buffer_name(certificate_one_name)
+    print "Sending packet: ", repr(packet)
+    s.send(packet)
+    res = s.recv(2048)
+    print "Received packet: ", repr(res)
+    check_packet_header(1, res, Packet.FILE_SUCCESSFULLY_VOUCHED)
+
 
 def test_get_singly_vouched_file_with_trust_circle_diameter_one(s):
 
@@ -137,9 +149,10 @@ def test_get_singly_vouched_file_with_trust_circle_diameter_one(s):
     # Send a REQUEST_FILE
     packet = Packet.READY_TO_RECEIVE
     print "Sending packet: ", repr(packet)
+    print "File length: ", file_length
     s.send(packet)
     res = s.recv(file_length)
     print "Received packet: ", repr(res)
     # Confirm we got START_OF_FILE
     check_packet_header(2, res, Packet.FILE_CONTENT)
-    check_packet_content(3, res, file_one_content)
+    check_packet_body(3, res, file_one_content)

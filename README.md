@@ -10,7 +10,7 @@
 
 ### Add certificates
 
-test_add_new_certificate
+✓ test_add_new_certificate
 
 test_add_existing_certificate
 
