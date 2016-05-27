@@ -32,15 +32,16 @@ public class Packet {
     public static final String VOUCH_USING_CERT  = "612";
     public static final String READY_TO_RECEIVE_CERTIFICATE  = "611";
     public static final String FILE_SUCCESSFULLY_VOUCHED = "601";
-    public static final String HASHED_RANDOM_NUMBER = "605";
-    public static final String UNHASHED_RANDOM_NUMBER = "606";
-    
     public static final String FILE_NOT_VOUCHED = "602";
     
     public static final int MAX_NAME_LENGTH = 32;
     public static final int FRAME_LENGTH = 1024;
     public static final int HEADER_LENGTH = 3;
     
+    
+    public static final String PUBKEY_CHALLENGE = "605";
+    public static final String PUBKEY_RESPONSE = "606";
+    public static final String PUBKEY_CHALLENGE_FAILED = "607";
     
     
     

@@ -8,6 +8,7 @@ import java.io.IOException;
 import oldtrustyclient.ArgParser.*;
 import java.net.Socket;
 import java.io.BufferedInputStream;
+import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -16,13 +17,18 @@ import java.io.OutputStream;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
 import java.security.Key;
+import java.security.KeyFactory;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.crypto.BadPaddingException;
@@ -34,7 +40,6 @@ import javax.net.ssl.X509TrustManager;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
-import static sun.security.x509.CertificateAlgorithmId.ALGORITHM;
 
 /**
  *
@@ -80,7 +85,7 @@ public class TCPClient {
                 try {
                     sendCertificate();
                 } catch (IOException ex) {
-                    System.out.printf("File upload failed: ");
+                    System.out.printf("cert upload failed: ");
                     throw(ex);
                 }
                 break;
@@ -88,16 +93,15 @@ public class TCPClient {
                 try {
                     listFiles();
                 } catch (IOException ex) {
-                    System.out.printf("File upload failed: ");
+                    System.out.printf("File list failed: ");
                     throw(ex);
                 }
                 break;
             case vouch:
                 try {
                     vouchFor();
-                } catch (IOException ex) {
-                    System.out.printf("File upload failed: ");
-                    throw(ex);
+                } catch (IOException | NoSuchAlgorithmException | InvalidKeySpecException ex) {
+                    System.out.printf("File vouch failed: ");
                 }
                 break;
         }
@@ -205,13 +209,13 @@ public class TCPClient {
         writePacket(Packet.END_OF_FILE.getBytes());
     }
     
-    private void vouchFor() throws IOException, ClassNotFoundException
+    private void vouchFor() throws IOException, ClassNotFoundException, NoSuchAlgorithmException, InvalidKeySpecException
     {       
         startVouchFile(argStruct.fileToVouch, argStruct.uploadFileName);
         
         byte[] response = readPacket();
         
-        if(isOfType(response, Packet.HASHED_RANDOM_NUMBER))
+        if(isOfType(response, Packet.PUBKEY_CHALLENGE))
         {
             doVerification(response);
             response = readPacket();
@@ -407,18 +411,56 @@ public class TCPClient {
         return packet;
     }
     
-    private void doVerification(byte[] response) throws IOException, ClassNotFoundException
+    private void doVerification(byte[] response) throws IOException, ClassNotFoundException, NoSuchAlgorithmException, InvalidKeySpecException
     {
-        byte[] data = stripHeader(response);
-        byte[] realData = decryptData(data);
+        byte[] data = Arrays.copyOf(stripHeader(response), 172);
+        byte[] decoded = Base64.getDecoder().decode(data);
+        byte[] realData = decryptData(decoded);
         System.out.printf("%s\n", new String(realData, java.nio.charset.StandardCharsets.UTF_8));
+        
+        int number = Integer.parseInt(new String(realData));
+        number = number + 499;
+        System.out.printf("%d\n", number);
+        
+        byte[] num = ByteBuffer.allocate(4).putInt(number).array();
+        byte[] encoded = encryptData(num);
+        realData = Base64.getEncoder().encode(encoded);
+        
+        sendPacket(Packet.PUBKEY_RESPONSE, realData);
     }
     
-    private byte[] decryptData(byte[] data) throws IOException, ClassNotFoundException
+    private byte[] encryptData(byte[] data) throws IOException, ClassNotFoundException, NoSuchAlgorithmException, InvalidKeySpecException
     {
         Cipher cipher = null;
         try {
-            cipher = Cipher.getInstance(ALGORITHM);
+            cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+        } catch (NoSuchAlgorithmException ex) {
+            Logger.getLogger(TCPClient.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (NoSuchPaddingException ex) {
+            Logger.getLogger(TCPClient.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        PrivateKey privKey = loadPrivateKey();
+        try {
+            cipher.init(Cipher.ENCRYPT_MODE, privKey);
+        } catch (InvalidKeyException ex) {
+            Logger.getLogger(TCPClient.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+        try {
+            return cipher.doFinal(data);
+        } catch (IllegalBlockSizeException ex) {
+            Logger.getLogger(TCPClient.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (BadPaddingException ex) {
+            Logger.getLogger(TCPClient.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return new byte[2];
+    }
+    
+    private byte[] decryptData(byte[] data) throws IOException, ClassNotFoundException, NoSuchAlgorithmException, InvalidKeySpecException
+    {
+        Cipher cipher = null;
+        try {
+            cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
         } catch (NoSuchAlgorithmException ex) {
             Logger.getLogger(TCPClient.class.getName()).log(Level.SEVERE, null, ex);
         } catch (NoSuchPaddingException ex) {
@@ -441,10 +483,18 @@ public class TCPClient {
         return new byte[2];
     }
     
-    private PrivateKey loadPrivateKey() throws IOException, ClassNotFoundException
+    private PrivateKey loadPrivateKey() throws IOException, ClassNotFoundException, NoSuchAlgorithmException, InvalidKeySpecException
     {
-        ObjectInputStream in = new ObjectInputStream(new FileInputStream("priv.key"));
-        return (PrivateKey) in.readObject();
+        File f = new File("/home/nick/uwa/alex/oldtrusty/priv.der");
+        FileInputStream fis = new FileInputStream(f);
+        DataInputStream dis = new DataInputStream(fis);
+        byte[] keyBytes = new byte[(int) f.length()];
+        dis.readFully(keyBytes);
+        dis.close();
+
+        PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(keyBytes);
+        KeyFactory kf = KeyFactory.getInstance("RSA");
+        return kf.generatePrivate(spec);
     }
     
     
