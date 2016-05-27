@@ -5,7 +5,6 @@ port = 3002
 #
 s = socket.socket()
 ssl_soc = ssl.wrap_socket(s, cert_reqs=ssl.CERT_REQUIRED)
-
 ssl_soc.connect((host,port))
 
 
