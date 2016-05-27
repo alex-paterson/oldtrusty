@@ -294,25 +294,20 @@ public class TCPClient {
         buf[1] = (byte) ifNamed;
         for(int i = 0; i < ifNamed; i++)
         {
-            if (argStruct.namesToInclude.length() > Packet.MAX_NAME_LENGTH) {
-                System.out.printf("Name too long\n");
-                return new byte[1];
-            }
-            System.arraycopy(argStruct.namesToInclude.getBytes(), 0, buf, i*Packet.MAX_NAME_LENGTH + 2, argStruct.namesToInclude.length());
+            System.arraycopy(bufferString(argStruct.namesToInclude), 0, buf, i*Packet.MAX_NAME_LENGTH + 2, Packet.MAX_NAME_LENGTH);
         }
             
-        if(argStruct.downloadFileName.length() > Packet.MAX_NAME_LENGTH)
-        {
-            System.out.printf("Filename too long\n");
-            return new byte[1];
-        }
-            
-        System.arraycopy(argStruct.downloadFileName.getBytes(), 0, buf, ifNamed*Packet.MAX_NAME_LENGTH + 2, argStruct.downloadFileName.length());
+        System.arraycopy(bufferString(argStruct.downloadFileName), 0, buf, ifNamed*Packet.MAX_NAME_LENGTH + 2, Packet.MAX_NAME_LENGTH);
         return buf;
     }
     
     private byte[] bufferString(String s)
     {
+        if(s.length() > Packet.MAX_NAME_LENGTH)
+        {
+            System.out.printf("Name too long\n");
+            return new byte[Packet.MAX_NAME_LENGTH];
+        }
         byte[] buf = new byte[Packet.MAX_NAME_LENGTH];
         System.arraycopy(s.getBytes(), 0, buf, 0, s.length());
         return buf;

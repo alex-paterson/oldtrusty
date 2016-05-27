@@ -240,7 +240,6 @@ class TCPServer:
         name = unbuffer_name(name)
         filename = unbuffer_name(filename)
 
-        filename = self.__fix_filename(filename)
         return desired_circumference, name, filename
 
     # decrypts the request file header
@@ -254,15 +253,6 @@ class TCPServer:
         filename = unbuffer_name(message[0:Packet.MAX_NAME_LENGTH])
         certname = unbuffer_name(message[Packet.MAX_NAME_LENGTH:2*Packet.MAX_NAME_LENGTH])
         return filename, certname
-
-    # Shrinks the filename found in packet down to letters only (could be done better)
-    def __fix_filename(self, filename):
-        counter = 0
-        for letter in filename:
-            if not (letter.isalpha() or letter.isdigit() or letter == '.' or letter == '_' or letter == '-'):
-                return filename[0:counter]
-            counter = counter + 1
-        return filename
 
     def __add_header(self, packet_type, message):
         if not message:
