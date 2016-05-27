@@ -111,6 +111,18 @@ def test_add_new_certificate(s):
     check_packet_header(2, res, Packet.SUCCESSFULLY_ADDED)
 
 
+def test_add_existing_certificate(s):
+
+    # First we send a START_OF_CERTIFICATE
+    packet = Packet.START_OF_CERTIFICATE + buffer_name(certificate_one_name)
+    print "Sending packet: ", repr(packet)
+    s.send(packet)
+    res = s.recv(2048)
+    print "Received packet: ", repr(res)
+    # Confirm we got CERTIFICATE_ALREADY_EXISTS
+    check_packet_header(1, res, Packet.CERTIFICATE_ALREADY_EXISTS)
+
+
 def test_vouch_for_nonexistent_file(s):
 
     # First we send a VOUCH_FOR_FILE
@@ -146,13 +158,24 @@ def test_get_singly_vouched_file_with_trust_circle_diameter_one(s):
 
     file_length = ascii_to_length(res[3:8])
 
-    # Send a REQUEST_FILE
+    # Send a READY_TO_RECEIVE
     packet = Packet.READY_TO_RECEIVE
     print "Sending packet: ", repr(packet)
     print "File length: ", file_length
     s.send(packet)
     res = s.recv(file_length+3)
     print "Received packet: ", repr(res)
-    # Confirm we got START_OF_FILE
+    # Confirm we got FILE_CONTENT
     check_packet_header(2, res, Packet.FILE_CONTENT)
     check_packet_body(3, res, file_one_content)
+
+def test_get_singly_vouched_file_with_trust_circle_diameter_one_and_nonexistent_name(s):
+
+    # First we send a REQUEST_FILE
+    packet = Packet.REQUEST_FILE + chr(1) + chr(1) + buffer_name("idon'texist.cert") + buffer_name(filename_one)
+    print "Sending packet: ", repr(packet)
+    s.send(packet)
+    res = s.recv(2048)
+    print "Received packet: ", repr(res)
+    # Confirm we got CERTIFICATE_DOESNT_EXIST
+    check_packet_header(1, res, Packet.CERTIFICATE_DOESNT_EXIST)
