@@ -8,7 +8,13 @@ file_one_content = "I'm a file full of good stuff."
 filename_one = "{}.txt".format(''.join([random.choice('abcdefghijk123') for _ in range(10)]))
 
 certificate_one_content = read_in_file('files/A/A.cert')
+certificate_two_content = read_in_file('files/B/B.cert')
+certificate_three_content = read_in_file('files/C/C.cert')
 certificate_one_name = "{}.cert".format(''.join([random.choice('abcdefghijk123') for _ in range(10)]))
+certificate_two_name = "{}.cert".format(''.join([random.choice('abcdefghijk123') for _ in range(10)]))
+certificate_three_name = "{}.cert".format(''.join([random.choice('abcdefghijk123') for _ in range(10)]))
+
+
 
 def test_add_new_file(s):
 
@@ -182,6 +188,18 @@ def test_get_singly_vouched_file_with_trust_circle_diameter_one_and_nonexistent_
     check_packet_header(1, res, Packet.FILE_NOT_VOUCHED)
 
 
+def test_get_singly_vouched_file_with_trust_circle_diameter_two(s):
+
+    # First we send a REQUEST_FILE
+    packet = Packet.REQUEST_FILE + chr(2) + chr(0) + buffer_name(filename_one)
+    print "Sending packet: ", repr(packet)
+    s.send(packet)
+    res = s.recv(2048)
+    print "Received packet: ", repr(res)
+    # Confirm we got CERTIFICATE_DOESNT_EXIST
+    check_packet_header(1, res, Packet.FILE_NOT_VOUCHED)
+
+
 def test_get_singly_vouched_file_with_trust_circle_diameter_one_and_name(s):
 
     # First we send a REQUEST_FILE
@@ -205,3 +223,79 @@ def test_get_singly_vouched_file_with_trust_circle_diameter_one_and_name(s):
     # Confirm we got FILE_CONTENT
     check_packet_header(2, res, Packet.FILE_CONTENT)
     check_packet_body(3, res, file_one_content)
+
+
+def test_vouch_for_singly_vouched_file(s):
+
+    # Need to upload another cert first:
+
+    # First we send a START_OF_CERTIFICATE
+    packet = Packet.START_OF_CERTIFICATE + buffer_name(certificate_two_name)
+    print "Sending packet: ", repr(packet)
+    s.send(packet)
+    res = s.recv(2048)
+    print "Received packet: ", repr(res)
+    # Confirm we got START_OF_FILE
+    check_packet_header(1, res, Packet.READY_TO_RECEIVE_CERTIFICATE)
+
+    # Send a CERTIFICATE_CONTENT
+    packet = Packet.CERTIFICATE_CONTENT + certificate_two_content
+    print "Sending packet: ", repr(packet)
+    s.send(packet)
+    res = s.recv(2048)
+    print "Received packet: ", repr(res)
+    # Confirm we got SUCCESSFULLY_ADDED
+    check_packet_header(2, res, Packet.SUCCESSFULLY_ADDED)
+
+
+    # First we send a VOUCH_FOR_FILE
+    packet = Packet.VOUCH_FOR_FILE + buffer_name(filename_one) + buffer_name(certificate_two_name)
+    print "Sending packet: ", repr(packet)
+    s.send(packet)
+    res = s.recv(2048)
+    print "Received packet: ", repr(res)
+    check_packet_header(3, res, Packet.FILE_SUCCESSFULLY_VOUCHED)
+
+
+def test_get_doubly_vouched_diameter_one_file_with_trust_circle_diameter_two(s):
+
+    # First we send a REQUEST_FILE
+    packet = Packet.REQUEST_FILE + chr(2) + chr(0) + buffer_name(filename_one)
+    print "Sending packet: ", repr(packet)
+    s.send(packet)
+    res = s.recv(2048)
+    print "Received packet: ", repr(res)
+    # Confirm we got CERTIFICATE_DOESNT_EXIST
+    check_packet_header(1, res, Packet.FILE_NOT_VOUCHED)
+
+
+def test_vouch_for_doubly_vouched_file(s):
+
+    # Need to upload another cert first:
+
+    # First we send a START_OF_CERTIFICATE
+    packet = Packet.START_OF_CERTIFICATE + buffer_name(certificate_three_name)
+    print "Sending packet: ", repr(packet)
+    s.send(packet)
+    res = s.recv(2048)
+    print "Received packet: ", repr(res)
+    # Confirm we got START_OF_FILE
+    check_packet_header(1, res, Packet.READY_TO_RECEIVE_CERTIFICATE)
+
+    # Send a CERTIFICATE_CONTENT
+    packet = Packet.CERTIFICATE_CONTENT + certificate_three_content
+    print "Sending packet: ", repr(packet)
+    s.send(packet)
+    res = s.recv(2048)
+    print "Received packet: ", repr(res)
+    # Confirm we got SUCCESSFULLY_ADDED
+    check_packet_header(2, res, Packet.SUCCESSFULLY_ADDED)
+
+
+    # First we send a VOUCH_FOR_FILE
+    packet = Packet.VOUCH_FOR_FILE + buffer_name(filename_one) + buffer_name(certificate_three_name)
+    print "Sending packet: ", repr(packet)
+    s.send(packet)
+    res = s.recv(2048)
+    print "Received packet: ", repr(res)
+    check_packet_header(3, res, Packet.FILE_SUCCESSFULLY_VOUCHED)

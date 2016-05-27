@@ -2,19 +2,19 @@
 
 ## To Do
 
-### Add files
+### ✓ Add files
 
 ✓ test_add_new_file
 
 ✓ test_add_existing_file
 
-### Add certificates
+### ✓ Add certificates
 
 ✓ test_add_new_certificate
 
 ✓ test_add_existing_certificate
 
-### Vouching for files
+### ✓ Vouching for files
 
 ✓ test_vouch_for_unvouched_file
 
@@ -22,11 +22,11 @@
 
 ✓ test_vouch_for_unvouched_file_with_non_extistent_certificate
 
-test_vouch_for_singly_vouched_file
+✓ test_vouch_for_singly_vouched_file
 
-test_vouch_for_doubly_vouched_file
+✓ test_vouch_for_doubly_vouched_file
 
-### Get Files
+### ✗ Get Files
 
 ✓ test_get_file_plain
 
@@ -39,12 +39,12 @@ test_vouch_for_doubly_vouched_file
 
 ✓ test_get_singly_vouched_file_with_trust_circle_diameter_one_and_nonexistent_name
 
-✗ test_get_singly_vouched_file_with_trust_circle_diameter_one_and_name
+✓ test_get_singly_vouched_file_with_trust_circle_diameter_one_and_name
 
-test_get_singly_vouched_file_with_trust_circle_diameter_two
+✓ test_get_singly_vouched_file_with_trust_circle_diameter_two
 
 
-test_get_doubly_vouched_file_with_trust_circle_diameter_two
+✓ test_get_doubly_vouched_diameter_one_file_with_trust_circle_diameter_two
 
 test_get_doubly_vouched_file_with_trust_circle_diameter_two_and_name
 

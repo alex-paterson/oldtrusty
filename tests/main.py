@@ -34,4 +34,13 @@ test(test_get_singly_vouched_file_with_trust_circle_diameter_one, s)
 
 test(test_get_singly_vouched_file_with_trust_circle_diameter_one_and_nonexistent_name, s)
 
+test(test_get_singly_vouched_file_with_trust_circle_diameter_two, s)
+
 test(test_get_singly_vouched_file_with_trust_circle_diameter_one_and_name, s)
+
+test(test_vouch_for_singly_vouched_file, s)
+
+test(test_get_doubly_vouched_diameter_one_file_with_trust_circle_diameter_two, s)
+
+
+test(test_vouch_for_doubly_vouched_file, s)
