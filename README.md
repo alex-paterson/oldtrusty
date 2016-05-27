@@ -1,6 +1,6 @@
 # Notes
 
-✗ 
+✗
 
 ## To Do
 
