@@ -178,4 +178,4 @@ def test_get_singly_vouched_file_with_trust_circle_diameter_one_and_nonexistent_
     res = s.recv(2048)
     print "Received packet: ", repr(res)
     # Confirm we got CERTIFICATE_DOESNT_EXIST
-    check_packet_header(1, res, Packet.CERTIFICATE_DOESNT_EXIST)
+    check_packet_header(1, res, Packet.FILE_NOT_VOUCHED)
