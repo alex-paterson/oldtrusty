@@ -1,7 +1,7 @@
 import os
 from .certificate_handler import CertificateHandler
 from .exceptions import *
-
+from .signing import sign_data_with_pubkey
 
 class VouchHandler:
     def __init__(self, file_path, certificate_path):
@@ -54,3 +54,17 @@ class VouchHandler:
 
     def reload_certificates(self):
         self.__certHandler.reload_certificates()
+
+    def get_hashed_verification(self, certname):
+        if self.does_file_exist(filename):
+            random_number = 1
+            pubkey = self.__certHandler.pubkey_from_certificate(certname)
+            hashed_number = sign_data_with_pubkey(random_number, pubkey)
+            return hashed_number, random_number
+        else:
+            raise NoFileError("File does not exist {}".format(filename))
+
+    def verify_random_number(self, returned_number, original_number):
+        if returned_number == original_number:
+            return true
+        return false
