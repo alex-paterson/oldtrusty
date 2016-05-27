@@ -33,3 +33,5 @@ test(test_vouch_for_unvouched_file, s)
 test(test_get_singly_vouched_file_with_trust_circle_diameter_one, s)
 
 test(test_get_singly_vouched_file_with_trust_circle_diameter_one_and_nonexistent_name, s)
+
+test(test_get_singly_vouched_file_with_trust_circle_diameter_one_and_name, s)

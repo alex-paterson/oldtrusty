@@ -37,7 +37,7 @@ test_vouch_for_doubly_vouched_file
 
 ✓ test_get_singly_vouched_file_with_trust_circle_diameter_one
 
-✗ test_get_singly_vouched_file_with_trust_circle_diameter_one_and_nonexistent_name
+✓ test_get_singly_vouched_file_with_trust_circle_diameter_one_and_nonexistent_name
 
 ✗ test_get_singly_vouched_file_with_trust_circle_diameter_one_and_name
 
