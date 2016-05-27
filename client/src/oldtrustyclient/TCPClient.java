@@ -105,7 +105,8 @@ public class TCPClient {
     
     private void downloadFile() throws IOException
     {
-        startDownloadFile();
+        if(!startDownloadFile())
+            return;
         
         byte[] response = readPacket();
         
@@ -190,13 +191,16 @@ public class TCPClient {
     {       
         FileInputStream fis = null;
         File myFile = new File(argStruct.uploadFileName);
-        byte[] buf = new byte[Packet.FRAME_LENGTH];
+        byte[] buf = new byte[Packet.HEADER_LENGTH + Packet.MAX_NAME_LENGTH];
         try {
             fis = new FileInputStream(myFile);
         } catch (FileNotFoundException ex) {
             System.out.printf("Could not find certificate\n");
             return;
         }
+        
+        buf = new byte[Packet.HEADER_LENGTH + (int)myFile.length()];
+        
         BufferedInputStream bufInput = new BufferedInputStream(fis);
         int bufLength = bufInput.read(buf, 0, buf.length);
         
@@ -248,16 +252,23 @@ public class TCPClient {
         writePacket(packet);
     }
     
-    private void startDownloadFile() throws IOException
+    private boolean startDownloadFile() throws IOException
     {
         sendPacket(Packet.REQUEST_FILE,  constructDownloadPacket());
         
         byte[] response = readPacket();
         
         if(isOfType(response, Packet.START_OF_FILE))
+        {
             writePacket(Packet.READY_TO_RECEIVE_PART.getBytes());
+            return true;
+        }
         else if(isOfType(response, Packet.FILE_NOT_VOUCHED))    
+        {       
             System.out.printf("file not vouched\n");
+            return false;
+        }
+        return false;
     }
     
     /*
