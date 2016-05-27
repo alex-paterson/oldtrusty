@@ -1,5 +1,7 @@
 # Notes
 
+✗ 
+
 ## To Do
 
 ### ✓ Add files
@@ -26,36 +28,40 @@
 
 ✓ test_vouch_for_doubly_vouched_file
 
-### ✗ Get Files
+### ✓ Get Files
 
 ✓ test_get_file_plain
 
 ✓ test_get_nonexistent_file
 
-✓ test_get_unvouched_file_with_trust_circle_diameter_one
+✓ test_get_unvouched_file_with_trust_circle_diameter_one (error)
 
 
 ✓ test_get_singly_vouched_file_with_trust_circle_diameter_one
 
-✓ test_get_singly_vouched_file_with_trust_circle_diameter_one_and_nonexistent_name
+✓ test_get_singly_vouched_file_with_trust_circle_diameter_one_and_nonexistent_name (error)
 
 ✓ test_get_singly_vouched_file_with_trust_circle_diameter_one_and_name
 
-✓ test_get_singly_vouched_file_with_trust_circle_diameter_two
+✓ test_get_singly_vouched_file_with_trust_circle_diameter_two (error)
 
 
-✓ test_get_doubly_vouched_diameter_one_file_with_trust_circle_diameter_two
+✓ test_get_diameter_one_file_with_trust_circle_diameter_two (error)
 
-test_get_doubly_vouched_file_with_trust_circle_diameter_two_and_name
+✓ test_get_file_with_trust_circle_diameter_two_and_name
 
-test_get_doubly_vouched_file_with_trust_circle_diameter_three
+✓ test_get_diameter_two_file_with_trust_circle_diameter_three_and_name (error)
 
 
-test_get_triply_vouched_file_with_trust_circle_diameter_three
+✓ test_get_incomplete_diameter_three_file_with_trust_circle_diameter_three (C<-A<->B) (error)
 
-test_get_triply_vouched_file_with_trust_circle_diameter_three_and_name
+✓ test_get_incomplete_diameter_three_file_with_trust_circle_diameter_three_2 (C<->A<->B) (error)
 
-test_get_triply_vouched_file_with_trust_circle_diameter_four
+✓ test_get_diameter_three_file_with_trust_circle_diameter_three (C<->A<->B->C)
+
+✓ test_get_diameter_three_file_with_trust_circle_diameter_three_and_name
+
+✓ test_get_diameter_three_file_with_trust_circle_diameter_four (error)
 
 
 
@@ -67,16 +73,16 @@ To generate new private key and certificate:
 openssl req -new -newkey rsa:1024 -days 365 -nodes -x509 -keyout test.key -out test.cert
 ```
 
-To sign a CSR with specified private key and certificate:
-
-```
-openssl x509 -CAkey test.key -CA test.cert -in 1.csr -req -out 1.crt -CAcreateserial
-```
-
 To generate CSR:
 
 ```
 openssl req -new -sha256 -key test.key -out 2.csr
+```
+
+To sign a CSR with specified private key and certificate:
+
+```
+openssl x509 -CAkey test.key -CA test.cert -in 1.csr -req -out 1.crt -CAcreateserial
 ```
 
 To display who signed the certificate:
