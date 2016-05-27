@@ -55,16 +55,16 @@ test_get_triply_vouched_file_with_trust_circle_diameter_four
 
 ## Signing
 
-to sign a CSR with specified private key, certificate
-
-```
-openssl x509 -CAkey test.key -CA test.cert -in 1.csr -req -out 1.crt -CAcreateserial
-```
-
-to generate new private key, certificate:
+To generate new private key and certificate:
 
 ```
 openssl req -new -newkey rsa:1024 -days 365 -nodes -x509 -keyout test.key -out test.cert
+```
+
+To sign a CSR with specified private key and certificate:
+
+```
+openssl x509 -CAkey test.key -CA test.cert -in 1.csr -req -out 1.crt -CAcreateserial
 ```
 
 To generate CSR:
@@ -73,13 +73,11 @@ To generate CSR:
 openssl req -new -sha256 -key test.key -out 2.csr
 ```
 
-to display who signed the certificate:
+To display who signed the certificate:
 
 ```
 openssl x509 -text -noout -in 1.crt
 ```
-
-ie server will loop through all certificates, see who signed whos
 
 # Client
 
