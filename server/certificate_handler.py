@@ -12,7 +12,6 @@ class CertificateHandler:
 
     def __load_certificates(self):
         for f in os.listdir(self.__certificate_path):
-            print "CERTIFICATE:", f
             filename = os.path.join(self.__certificate_path, f)
             with open(filename, 'rt') as cf:
                 c = cf.read()
@@ -24,7 +23,6 @@ class CertificateHandler:
                 self.__add_trust(subject, issuer)
 
     def reload_certificates(self):
-        print "Reloading certificates"
         self.__trust_list = {}
         self.__load_certificates()
 
@@ -48,23 +46,16 @@ class CertificateHandler:
             named = False
             name = self.get_certificate_subject(name_to_include)
 
-        print "Checking vouches, including - ", name, "- starting at", start
-
         length, visited = self.__check_who_trusts(start, start, [], vouchList, name, named, 0, 0)
 
-        print "length ", length
         return length
 
     def __check_who_trusts(self, start, current, visited_list, vouchList, name_to_include, if_named_already, counter, max_length_so_far):
         new_counter = counter + 1
         visited_list.append(current)
 
-        print "visiting: ", current, max_length_so_far
-
-        print "had: ", if_named_already
         if not if_named_already:
             if_named_already = current == name_to_include
-            print "got:", current, name_to_include, if_named_already
 
         if current in self.__trust_list:
             for user in self.__trust_list[current]:
