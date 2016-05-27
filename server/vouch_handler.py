@@ -1,6 +1,5 @@
 import os
 from .certificate_handler import CertificateHandler
-from .file import File
 from .exceptions import *
 
 
@@ -53,6 +52,6 @@ class VouchHandler:
     def list_vouches(self, filename):
         if filename in self.__fileList:
             print "list: ", self.__fileList[filename]
-            return '\n'.join(self.__fileList[filename]
+            return '\n'.join(self.__fileList[filename])
         else:
             return "not found"
