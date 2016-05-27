@@ -1,6 +1,7 @@
 import os
 from .certificate_handler import CertificateHandler
 from .file import File
+from .exceptions import *
 
 
 class VouchHandler:
@@ -21,19 +22,26 @@ class VouchHandler:
         self.__fileList[filename] = File()
 
     # For now just use common name as ID
-    def add_vouch(self, filename, certificate):
-        if filename in self.__fileList:
-            name = self.__certHandler.get_certificate_subject(certificate)
-
-            print name
-
-            self.__fileList[filename].addVouch(name)
-            print str(name) + " vouched for" + filename
+    def add_vouch(self, filename, certname):
+        if self.does_cert_exist(certname):
+            if does_file_exist(filename):
+                name = self.__certHandler.get_certificate_subject(certname)
+                self.__fileList[filename].addVouch(name)
+                print str(name) + " vouched for" + filename
+            else:
+                raise NoFileError("No such filename: " + filename)
         else:
-            print "no such file: " + filename
+            raise NoCertificateError("No such certificate: " + certname)
 
     def does_file_exist(self, filename):
-        return filename in self.__fileList
+        return os.path.isfile(os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                                           'db/files/',
+                                           filename))
+
+    def does_cert_exist(self, filename):
+        return os.path.isfile(os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                                           'db/certificates/',
+                                           filename))
 
     def get_circle_length(self, filename, name_to_include):
         if self.does_file_exist(filename):

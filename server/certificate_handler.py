@@ -1,6 +1,7 @@
-from OpenSSL import crypto
 import os
+from OpenSSL import crypto
 
+from .exceptions import *
 
 class CertificateHandler:
     def __init__(self, certificate_path):
@@ -70,7 +71,13 @@ class CertificateHandler:
     def __ID(self, name):
         return name.CN
 
-    def get_certificate_subject(self, certificate):
-        cert = crypto.load_certificate(crypto.FILETYPE_PEM, certificate)
+    def get_certificate_subject(self, certname):
+        with open(os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                               'db/certificates/',
+                               filename)) as f:
+            certificate = f.read()
+        if not certificate:
+            raise NoCertificateError("Could not find certificate {}".format(certname))
 
+        cert = crypto.load_certificate(crypto.FILETYPE_PEM, certificate)
         return self.__ID(cert.get_subject())

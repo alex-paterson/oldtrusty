@@ -3,54 +3,14 @@ import sys
 import subprocess
 import socket
 import ssl
-from vouch_handler import VouchHandler
-from helpers import ascii_to_length, length_in_binary
+
+from .vouch_handler import VouchHandler
+from .helpers import ascii_to_length, length_in_binary, buffer_name, unbuffer_name
+from .exceptions import *
+from .packet import Packet
 
 
 INITIAL_RECV_LENGTH = 2048
-
-
-class Packet:
-    START_OF_FILE = '000'
-    # 000-<file-length[4]>-<filename[MAX_NAME_LENGTH]>
-    START_OF_CERTIFICATE = '001'
-    # 001-<file-length[4]>-<filename[MAX_NAME_LENGTH]>
-
-    FILE_CONTENT = '010'
-    # 010-<content[PRE-ESTABLISHED]>
-    CERTIFICATE_CONTENT = '011'
-    # 011-<content[PRE-ESTABLISHED]>
-
-    REQUEST_FILE = '030'
-    # 030-<circumference[1]>-<name-present[1]>-[<name[32]>]-<filename[MAX_NAME_LENGTH]>
-
-    READY_TO_RECEIVE = '200'
-    SUCCESSFULLY_ADDED = '201'
-
-    FILE_ALREADY_EXISTS = '401'
-    FILE_DOESNT_EXIST = '411'
-    CERTIFICATE_ALREADY_EXISTS = '402'
-    CERTIFICATE_DOESNT_EXIST = '412'
-
-    UNPROCESSABLE_ENTITY = '422'
-
-    UNRECOGNIZED_HEADER = '500'
-    UNEXPECTED_HEADER = '501'
-
-    REQUEST_FILE_LIST = '502'
-    FILE_LIST = '510'
-
-    VOUCH_FOR_FILE  = '600'
-    # 600-<filename[MAX_NAME_LENGTH]>
-    READY_TO_RECEIVE_CERTIFICATE  = '611'
-    VOUCH_USING_CERT  = '612'
-    # 612-<content[CERTIFICATE_LENGTH]>
-
-    FILE_SUCCESSFULLY_VOUCHED  = '601'
-    FILE_NOT_VOUCHED = '602'
-
-    MAX_NAME_LENGTH = 32
-    CERTIFICATE_LENGTH = 908
 
 
 class TCPServer:
@@ -104,20 +64,25 @@ class TCPServer:
             data = c.recv(INITIAL_RECV_LENGTH)
         print("$ Connection from {} closed\n".format(addr))
 
+
+
+    ''' ------------------------------------------------------------------------
+    This is the home of the good stuff: initial
+    incoming packets pass through here
+    -------------------------------------------------------------------------'''
     # We pass addr in for future logging
     def __handle_first_packet(self, c, addr, packet_type, message):
 
         # START_OF_FILE
         if packet_type == Packet.START_OF_FILE:
             length, filename = self.__interpret_start_of_file(message)
-            self.__interpret_start_of_file(message)
             print("$ ENTER INTERNAL LOOP __start_receiving_file\n")
             self.__start_receiving_file(c, addr, int(length), filename)
             print("$ LEAVE INTERNAL LOOP __start_receiving_file\n\n")
 
         # START_OF_CERTIFICATE
         elif packet_type == Packet.START_OF_CERTIFICATE:
-            filename = message
+            filename = unbuffer_name(message)
             print("$ ENTER INTERNAL LOOP __start_receiving_certificate\n")
             self.__start_receiving_certificate(c, addr, filename)
             print("$ LEAVE INTERNAL LOOP __start_receiving_certificate\n\n")
@@ -134,14 +99,20 @@ class TCPServer:
 
         # VOUCH_FOR_FILE
         elif packet_type == Packet.VOUCH_FOR_FILE:
-            filename = message
-            self.__handle_vouch(c, addr, message)
+            filename, certname = self.__interpret_vouch_for_file(message)
+            print filename, certname, "HERE"
+            self.__handle_vouch(c, addr, filename, certname)
 
         # Other headers should only arrive after entering an internal loop
         # or should only be received by client.
         else:
             self.__send_packet(c, Packet.UNEXPECTED_HEADER, "Unexpected header {}".format(packet_type), addr)
             print("Received unexpected header {}.\n".format(packet_type))
+    ''' ------------------------------------------------------------------------
+    -------------------------------------------------------------------------'''
+
+
+
 
     # Internal Loops
 
@@ -168,9 +139,10 @@ class TCPServer:
         # Calls __create_file which returns a status and message
         resp_packet_type, resp_message = self.__create_certificate(filename)
         # sends status and message back
+        print "WHYY", resp_packet_type, resp_message
         self.__send_packet(c, resp_packet_type, resp_message, addr)
         # if status is ready, then enter loop
-        if resp_packet_type == Packet.READY_TO_RECEIVE:
+        if resp_packet_type == Packet.READY_TO_RECEIVE_CERTIFICATE:
             # we start waiting HERE for new packets from the connection
             recv_packet_type, recv_message = self.__receive_packet(c)
             # if file part, append
@@ -221,16 +193,19 @@ class TCPServer:
         self.__send_packet(c, Packet.FILE_LIST, out, addr)
 
 
-    def __handle_vouch(self, c, addr, filename):
-        # Get certificate:
-        self.__send_packet(c, Packet.READY_TO_RECEIVE_CERTIFICATE, "Ready to receive certificate", addr)
+    def __handle_vouch(self, c, addr, filename, certname):
 
-        recv_packet_type, certificate = self.__receive_packet(c)
-        if recv_packet_type == Packet.VOUCH_USING_CERT:
-            self.__vouch_handler.add_vouch(filename, certificate)
-            self.__send_packet(c, Packet.FILE_SUCCESSFULLY_VOUCHED, "Successfully vouched for {}".format(filename), addr)
-        else:
-            self.__send_packet(c, Packet.UNEXPECTED_HEADER, "Unexpected {}".format(recv_packet_type), addr)
+        try:
+            self.__vouch_handler.add_vouch(filename, certname)
+        except NoCertificateError as e:
+            self.__send_packet(c, Packet.FILE_DOESNT_EXIST, "File does not exist {}".format(filename), addr)
+            return
+        except NoFileError as e:
+            self.__send_packet(c, Packet.CERTIFICATE_DOESNT_EXIST, "Certificate does not exist {}".format(certname), addr)
+            return
+
+        self.__send_packet(c, Packet.FILE_SUCCESSFULLY_VOUCHED, "Successfully vouched for {} with {}".format(filename, certname), addr)
+
 
     # We pass addr in for future logging
     def __send_packet(self, c, packet_type, message, addr):
@@ -263,15 +238,23 @@ class TCPServer:
         name = "" if ord(message[1]) == 0 else message[ 2 : 2+Packet.MAX_NAME_LENGTH ]
         filename = message[2+Packet.MAX_NAME_LENGTH:] if name else message[2:]
 
+        name = unbuffer_name(name)
+        filename = unbuffer_name(filename)
+
         filename = self.__fix_filename(filename)
         return desired_circumference, name, filename
 
     # decrypts the request file header
     def __interpret_start_of_file(self, message):
         length_ascii = message[0:4]
-        filename = message[4:]
+        filename = unbuffer_name(message[4:])
         length = ascii_to_length(length_ascii)
         return length, filename
+
+    def __interpret_vouch_for_file(self, message):
+        filename = unbuffer_name(message[0:Packet.MAX_NAME_LENGTH])
+        certname = unbuffer_name(message[Packet.MAX_NAME_LENGTH:2*Packet.MAX_NAME_LENGTH])
+        return filename, certname
 
     # Shrinks the filename found in packet down to letters only (could be done better)
     def __fix_filename(self, filename):
@@ -319,7 +302,7 @@ class TCPServer:
         filepath = os.path.join(self.__certificate_path, filename)
         if not os.path.isfile(filepath):
             with open(filepath, 'w+') as open_file:
-                return Packet.READY_TO_RECEIVE, "Certificate successfully created"
+                return Packet.READY_TO_RECEIVE_CERTIFICATE, "Certificate successfully created"
         else:
             return Packet.CERTIFICATE_ALREADY_EXISTS, "Certificate already exists"
 
