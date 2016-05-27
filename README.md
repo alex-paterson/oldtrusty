@@ -1,5 +1,7 @@
 # Notes
 
+✗ 
+
 ## To Do
 
 ### ✓ Add files
@@ -26,7 +28,7 @@
 
 ✓ test_vouch_for_doubly_vouched_file
 
-### ✗ Get Files
+### ✓ Get Files
 
 ✓ test_get_file_plain
 
