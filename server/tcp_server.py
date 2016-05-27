@@ -10,7 +10,7 @@ from M2Crypto import RSA
 from .vouch_handler import VouchHandler
 from .helpers import ascii_to_length, length_in_binary, buffer_name, unbuffer_name
 from .exceptions import *
-from .encryption_helpers import sign_data_with_pubkey, encrypt_with_key, check_solution
+from .encryption_helpers import encrypt_with_key, check_solution
 from .packet import Packet
 
 
