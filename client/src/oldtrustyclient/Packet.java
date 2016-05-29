@@ -1,13 +1,9 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package oldtrustyclient;
 
 /**
- *
- * @author Owner
+ * Packet header specification
+ * @author Simon de Sancha
+ * @author Alex Patterson
  */
 public class Packet {
     public static final String START_OF_FILE = "000";
@@ -33,23 +29,13 @@ public class Packet {
     public static final String READY_TO_RECEIVE_CERTIFICATE  = "611";
     public static final String FILE_SUCCESSFULLY_VOUCHED = "601";
     public static final String FILE_NOT_VOUCHED = "602";
+   
+    public static final String PUBKEY_CHALLENGE = "605";
+    public static final String PUBKEY_RESPONSE = "606";
+    public static final String PUBKEY_CHALLENGE_FAILED = "607";
     
     public static final int MAX_NAME_LENGTH = 32;
     public static final int FRAME_LENGTH = 1024;
     public static final int HEADER_LENGTH = 3;
     
-    
-    public static final String PUBKEY_CHALLENGE = "605";
-    public static final String PUBKEY_RESPONSE = "606";
-    public static final String PUBKEY_CHALLENGE_FAILED = "607";
-    
-    
-    
-    
-/*public static final StringEND_OF_CERTIFICATE  = '021' 
-public static final String    FILE_DOESNT_EXIST  = '411' 
-public static final String   CERTIFICATE_ALREADY_EXISTS  = '402
-public static final String  CERTIFICATE_DOESNT_EXIST  = "412" ;
-public static final StringUNRECOGNIZED_HEADER  = '500" 
-public static final String UNEXPECTED_HEADER  = '501"*/
 }

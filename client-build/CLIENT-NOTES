@@ -1,8 +1,24 @@
-Client private key must be in DER format. Must be named client.der
+Client private key must be in DER format. Must be named client.der, in same directory as oldTrustyClient.jar
 To convert PEM to DER:
 
-openssl pkcs8 -topk8 -inform PEM -outform DER -in rsaprivkey.pem -out rsaprivkey.der -nocrypt
+	openssl pkcs8 -topk8 -inform PEM -outform DER -in rsaprivkey.pem -out rsaprivkey.der -nocrypt
+
+Server certificate must be in Java trust store, in the same directory as oldTrustyClient.jar, named trust.jks. To add the server.crt to a trust store:
+	keytool -importcert -file server.crt -keystore trust.jks -alias "server"
+
+Notes:
+	To specify host use '--host' argument, '-h' is reservered for help.
+
+
+
+
+
+
 
 To compile:
-javac -cp ".:argparse4j-0.7.0.jar" *.java
+	./build.sh
+
+To run:
+	java -jar oldTrustyClient.jar ...args
+
 

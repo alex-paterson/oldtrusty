@@ -1,14 +1,7 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package oldtrustyclient;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.impl.Arguments;
 import net.sourceforge.argparse4j.inf.ArgumentParser;
@@ -16,8 +9,10 @@ import net.sourceforge.argparse4j.inf.ArgumentParserException;
 import net.sourceforge.argparse4j.inf.Namespace;
 
 /**
- *
- * @author Owner
+ * Processes command line arguments
+ * 
+ * @author Simon de Sancha
+ * @author Alex Patterson
  */
 public class ArgParser {
     
@@ -96,6 +91,9 @@ public class ArgParser {
                 .type(String.class);
     }
     
+    /*
+    * Checks if this situation is a valid one
+    */
     private void checkIfValidArgs()
     {
         if(argStruct.mode == Mode.unset)
@@ -116,6 +114,11 @@ public class ArgParser {
         }
     }
     
+    /*
+    * Attempt to parse the command line arguments
+    * @param args arguments
+    * @return   Argument structure
+    */
     public ArgumentStruct parse(String[] args) throws UnknownHostException, ArgumentParserException
     {
         Namespace res;
@@ -133,6 +136,10 @@ public class ArgParser {
         return argStruct;
     }
     
+    /*
+    * Process the results from the argparse4j library
+    * @param res    results from argparse4j
+    */
     private void fillStruct(Namespace res) throws UnknownHostException
     {
         Object obj;
@@ -156,6 +163,7 @@ public class ArgParser {
         }
         if((obj = res.get("v")) != null)
         {
+            @SuppressWarnings("unchecked")
             List<String> list = (List<String>) obj;
             checkIfOption();
             argStruct.mode = Mode.vouch;
@@ -196,6 +204,9 @@ public class ArgParser {
         }
     }
     
+    /*
+    * Check if a mutually-exclusive argument has already been specified
+    */
     private void checkIfOption()
     {
         if(argStruct.mode != Mode.unset)

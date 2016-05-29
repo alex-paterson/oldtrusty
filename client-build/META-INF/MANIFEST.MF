@@ -1,0 +1,3 @@
+Main-Class: oldtrustyclient.OldTrustyClient
+Class-Path:  
+ argparse4j-0.7.0.jar  

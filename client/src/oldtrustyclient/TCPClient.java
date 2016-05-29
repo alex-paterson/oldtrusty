@@ -38,18 +38,19 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 
 /**
- *
- * @author Owner
+ * Communication with OldTrusty server
+ * @author Simon de Sancha
+ * @author Alex Patterson
  */
 public class TCPClient {
-    
-    
-    
-    private ArgumentStruct argStruct;
+    private final ArgumentStruct argStruct;
     private SSLSocket socket;        
     private InputStream is;
     private OutputStream os;
     
+    /*
+    * @param argStruct  command-line arguments
+    */
     public TCPClient(ArgumentStruct argStruct) throws IOException
     {
         this.argStruct = argStruct;
@@ -57,6 +58,9 @@ public class TCPClient {
         openSocket();
     }
     
+    /*
+    * Take action on the command-line arguments
+    */
     public void go() throws IOException, ClassNotFoundException
     {
         switch(argStruct.mode)
@@ -81,7 +85,7 @@ public class TCPClient {
                 try {
                     sendCertificate();
                 } catch (IOException ex) {
-                    System.out.printf("cert upload failed: ");
+                    System.out.printf("Certificate upload failed: ");
                     throw(ex);
                 }
                 break;
@@ -103,6 +107,9 @@ public class TCPClient {
         }
     }
     
+    /*
+    * Prepare netowrk IO streams
+    */
     private void prepareStreams()
     {
         try {
@@ -113,6 +120,9 @@ public class TCPClient {
         }
     }
     
+    /*
+    * Download a file specified in args
+    */
     private void downloadFile() throws IOException
     {
         int length = startDownloadFile();
@@ -136,6 +146,9 @@ public class TCPClient {
         }
     }
     
+    /*
+    * Upload a certificate specified in args
+    */
     private void sendCertificate() throws IOException
     {       
         FileInputStream fis = null;
@@ -171,6 +184,9 @@ public class TCPClient {
         sendPacket(Packet.END_OF_CERTIFICATE, "");
     }
     
+    /*
+    * Upload a file specified in args
+    */
     private void sendFile() throws IOException
     {       
         FileInputStream fis = null;
@@ -205,6 +221,9 @@ public class TCPClient {
         writePacket(Packet.END_OF_FILE.getBytes());
     }
     
+    /*
+    * Vouch for a file specified in args
+    */
     private void vouchFor() throws IOException, ClassNotFoundException, NoSuchAlgorithmException, InvalidKeySpecException
     {       
         startVouchFile(argStruct.fileToVouch, argStruct.uploadFileName);
@@ -228,6 +247,9 @@ public class TCPClient {
         }
     }
     
+    /*
+    * List files on server
+    */
     private void listFiles() throws IOException
     {
         sendPacket(Packet.REQUEST_FILE_LIST, "");
@@ -246,11 +268,20 @@ public class TCPClient {
         }
     }
     
+    /*
+    * Print a response from server
+    * @param response   packet from server
+    */
     private void printPacket(byte[] response)
     {
         System.out.printf("%s\n", new String(stripHeader(response), java.nio.charset.StandardCharsets.UTF_8));
     }
     
+    /*
+    * Send a packet to the server
+    * @param header required header
+    * @param header required data
+    */
     private void sendPacket(String header, String message) throws IOException
     {
         byte[] packet = addHeader(header.getBytes(), message.getBytes(), message.length());
@@ -266,8 +297,9 @@ public class TCPClient {
     }
     
     /*
-    32bytes filename
-    32bytes certname    
+    * Initiate a file vouch
+    * @param filename   file to vouch for
+    * @param certname   certificate to use
     */
     private void startVouchFile(String filename, String certname) throws IOException
     {
@@ -279,8 +311,9 @@ public class TCPClient {
         sendPacket(Packet.VOUCH_FOR_FILE,  buf);
     }
     
-    
-    
+    /*
+    * Initiate a file download
+    */
     private int startDownloadFile() throws IOException
     {
         sendPacket(Packet.REQUEST_FILE,  constructDownloadPacket());
@@ -302,12 +335,8 @@ public class TCPClient {
     }
     
     /*
-    Format for requesting files:
-    Header.
-    1 byte circumference length
-    1 byte number of names
-    MAX_NAME_LENGTH bytes per name    
-    MAX_NAME_LENGTH byte for filename
+    * Construct the file-download header
+    * @return   header
     */
     private byte[] constructDownloadPacket()
     {
@@ -327,6 +356,11 @@ public class TCPClient {
         return buf;
     }
     
+    /*
+    * Buffer a string up to required length
+    * @param s  string to buffer
+    * @return   buffered string
+    */
     private byte[] bufferString(String s)
     {
         if(s.length() > Packet.MAX_NAME_LENGTH)
@@ -339,33 +373,31 @@ public class TCPClient {
         return buf;
     }
     
+    /*
+    * Open an SSL socket to the server
+    */
     private void openSocket() throws IOException
     {   
-        TrustManager[] trustAllCerts = new TrustManager[] {new X509TrustManager() {
-                public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-                    return null;
-                }
-                public void checkClientTrusted(X509Certificate[] certs, String authType) {
-                }
-                public void checkServerTrusted(X509Certificate[] certs, String authType) {
-                }
-            }
-        };
-        
-        SSLContext sc = null;
-        try {
-            sc = SSLContext.getInstance("SSL");
-            sc.init(null, trustAllCerts, new java.security.SecureRandom());
-        } catch (NoSuchAlgorithmException | KeyManagementException ex) {
-            System.out.printf(ex.getLocalizedMessage());
+        File server = new File("trust.jks");
+        if(!server.exists())
+        {
+            System.out.printf("Cannot find server certificate\n");
+            throw new IOException("No server certificate");
         }
         
-        SSLSocketFactory f = sc.getSocketFactory();
+        
+        System.setProperty("javax.net.ssl.trustStore", "trust.jks");
+        SSLSocketFactory f = (SSLSocketFactory) SSLSocketFactory.getDefault();
+        
         socket = (SSLSocket) f.createSocket(argStruct.hostIP, argStruct.hostPort);
         
         prepareStreams();
     }
     
+    /*
+    * Handle an unexpected packet from server
+    * @param  response  packet from server
+    */
     private void handleError(byte[] response)
     {
         printPacket(response);
@@ -376,11 +408,24 @@ public class TCPClient {
         }
     }
     
+    /*
+    * Checks if packet is of type
+    * @param packet     specified packet
+    * @param header     header to check for
+    * @return   result
+    */
     private boolean isOfType(byte[] packet, String header)
     {
         return java.util.Arrays.equals(Arrays.copyOf(packet, Packet.HEADER_LENGTH), header.getBytes());
     }
     
+    /*
+    * Prefixes a header to a data packet
+    * @param packet     specified packet
+    * @param message    data
+    * @param mesLength  length of data
+    * @return           finished packet
+    */
     private byte[] addHeader(byte[] header, byte[] message, int mesLength)
     {
         byte[] packet = new byte[header.length + mesLength];
@@ -389,17 +434,30 @@ public class TCPClient {
         return packet;
     }
     
+    /*
+    * Strips packet down to data portion
+    * @param packet     packet
+    * @return       data portion of packet
+    */
     private byte[] stripHeader(byte[] packet)
     {
         return Arrays.copyOfRange(packet, Packet.HEADER_LENGTH, packet.length - Packet.HEADER_LENGTH);
     }
     
+    /*
+    * Sends packet to server
+    * @param packet     packet
+    */
     private void writePacket(byte[] packet) throws IOException
     {
         os.write(packet);
         os.flush();
     }
     
+    /*
+    * Reads packet from server (blocking)
+    * @return   packet
+    */
     private byte[] readPacket() throws IOException
     {
         byte[] packet = new byte[Packet.FRAME_LENGTH];
@@ -407,6 +465,10 @@ public class TCPClient {
         return packet;
     }
     
+    /*
+    * Complete a random-number challenge from server
+    * @param packet     packet
+    */
     private void doVerification(byte[] response) throws IOException, ClassNotFoundException, NoSuchAlgorithmException, InvalidKeySpecException
     {
         byte[] data = Arrays.copyOf(stripHeader(response), 172);
@@ -423,6 +485,12 @@ public class TCPClient {
         sendPacket(Packet.PUBKEY_RESPONSE, realData);
     }
     
+    /*
+    * Encrypts/decrypts data using RSA
+    * @param data   data
+    * @param ifEncrypt  if encrypting or decrypting
+    * @return   finished data
+    */
     private byte[] doDataEncryption(byte[] data, boolean ifEncrypt) throws IOException, ClassNotFoundException, NoSuchAlgorithmException, InvalidKeySpecException
     {
         Cipher cipher = null;
@@ -447,12 +515,17 @@ public class TCPClient {
         return new byte[2];
     }
     
+    /*
+    * Load private key from file
+    * @return   private key object
+    */
     private PrivateKey loadPrivateKey() throws IOException, ClassNotFoundException, NoSuchAlgorithmException, InvalidKeySpecException
     {
         File f = new File("client.der");
         if(!f.exists())
         {
             System.out.printf("Cannot find client private key\n");
+            throw new IOException("No client key");
         }
         
         FileInputStream fis = new FileInputStream(f);
