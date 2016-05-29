@@ -1,2 +1,2 @@
-pyopenssl
+pyopenssl (newest version)
 m2crypto
