@@ -42,7 +42,9 @@ class TCPServer:
             c, addr = self.s.accept()
             print("\n\n\n$ Connection from {} accepted\n".format(addr))
 
-            ssl_soc = ssl.wrap_socket(c, server_side=True, certfile=self.__certfile_path, keyfile=self.__keyfile_path)
+            ssl_soc = ssl.wrap_socket(c, server_side=True,
+                                      certfile=self.__certfile_path, 
+                                      keyfile=self.__keyfile_path)
 
             self.__receive_first_packet_from_connection(ssl_soc, addr)
 

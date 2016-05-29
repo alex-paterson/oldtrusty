@@ -19,14 +19,15 @@ class CertificateHandler:
 
                 subject = self.__ID(cert.get_subject())
                 issuer = self.__ID(cert.get_issuer())
+                pubkey = cert.get_pubkey()
 
-                self.__add_trust(subject, issuer)
+                self.__add_trust(subject, issuer, pubkey)
 
     def reload_certificates(self):
         self.__trust_list = {}
         self.__load_certificates()
 
-    def __add_trust(self, subject, trustedBy):
+    def __add_trust(self, subject, trustedBy, pubkey):
         print subject, "trusted by", trustedBy
 
         if subject in self.__trust_list:
