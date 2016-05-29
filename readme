@@ -18,7 +18,10 @@ Further features include:
 Certificates should be placed in server/db/certificates/
 Files should be placed in server/db/files/
 All users should have a self-signed certificate present to help with chain verification.
+Server certificate and private key must be placed in server/ssl/    (comes with a default pair)
+
 tests/server/main.py 	runs a series of tests on the server.
+
 	
 To run server:
 	python runserver.py -ip <IP to listen>
