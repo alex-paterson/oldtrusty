@@ -1,3 +1,6 @@
+Simon de Sancha - 21503324
+Alex Patterson - 21497839
+
 # Dependencies
 
 See requirements.txt - M2Crypto requires swig on OSX: `brew install swig` and openSSL: `brew install swig`
