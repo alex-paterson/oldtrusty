@@ -5,6 +5,7 @@ import socket
 import ssl
 import random
 import base64
+from socket import error as SocketError
 from M2Crypto import RSA
 
 from .vouch_handler import VouchHandler
@@ -20,7 +21,7 @@ INITIAL_RECV_LENGTH = 2048
 class TCPServer:
 
     def __init__(self, host='127.0.0.1', port=3002):
-        self.__host = socket.gethostbyname(socket.gethostname())
+        self.__host = '192.168.0.110'#host#socket.gethostbyname(socket.gethostname())
         self.__port = port
         self.__certfile_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'ssl/server.crt')
         self.__keyfile_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'ssl/server.key')
@@ -52,24 +53,28 @@ class TCPServer:
     # Connections and basic communication
 
     def __receive_first_packet_from_connection(self, c, addr):
-        data = c.recv(INITIAL_RECV_LENGTH)
-        while data:
-            if not data:
-                print("$ Connection from {} closed (no data)\n".format(addr))
-                c.close()
-                return
-
-            packet_type = self.__read_header(data)
-            message = self.__strip_header(data)
-            print("- RECEIVING PACKET {}".format(packet_type))
-            print("{}\n".format(message))
-
-            # Act on the data and retrieve response
-            # send_packet_type, send_message = self.__perform_action(c, packet_type, message)
-            self.__handle_first_packet(c, addr, packet_type, message)
-
+        try:
             data = c.recv(INITIAL_RECV_LENGTH)
-        print("$ Connection from {} closed\n".format(addr))
+            while data:
+                if not data:
+                    print("$ Connection from {} closed (no data)\n".format(addr))
+                    c.close()
+                    return
+
+                packet_type = self.__read_header(data)
+                message = self.__strip_header(data)
+                print("- RECEIVING PACKET {}".format(packet_type))
+                print("{}\n".format(message))
+
+                # Act on the data and retrieve response
+                # send_packet_type, send_message = self.__perform_action(c, packet_type, message)
+                self.__handle_first_packet(c, addr, packet_type, message)
+
+                data = c.recv(INITIAL_RECV_LENGTH)
+            print("$ Connection from {} closed\n".format(addr))
+        except SocketError as e:
+            print e
+            pass
 
 
 
