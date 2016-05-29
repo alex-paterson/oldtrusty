@@ -20,12 +20,13 @@ INITIAL_RECV_LENGTH = 2048
 class TCPServer:
 
     def __init__(self, host='127.0.0.1', port=3002):
-        self.__host = host
+        self.__host = socket.gethostbyname(socket.gethostname())
         self.__port = port
         self.__certfile_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'ssl/server.crt')
         self.__keyfile_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'ssl/server.key')
         self.__certificate_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'db/certificates/')
         self.__files_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'db/files/')
+        self.__check_paths()
         self.__vouch_handler = VouchHandler(self.__files_path, self.__certificate_path)
         print("$ Ready to serve.")
 
@@ -43,7 +44,7 @@ class TCPServer:
             print("\n\n\n$ Connection from {} accepted\n".format(addr))
 
             ssl_soc = ssl.wrap_socket(c, server_side=True,
-                                      certfile=self.__certfile_path, 
+                                      certfile=self.__certfile_path,
                                       keyfile=self.__keyfile_path)
 
             self.__receive_first_packet_from_connection(ssl_soc, addr)
@@ -291,6 +292,16 @@ class TCPServer:
         with open(filepath, 'w+') as open_file:
             self.__vouch_handler.add_file(filename)
             return Packet.READY_TO_RECEIVE, "File successfully created"
+
+    def __check_paths(self):
+        if not os.path.exists(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'db/')):
+            os.makedirs(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'db/'))
+        if not os.path.exists(self.__certificate_path):
+            os.makedirs(self.__certificate_path)
+        if not os.path.exists(self.__files_path):
+            os.makedirs(self.__files_path)
+        if (not os.path.isfile(self.__keyfile_path)) or (not os.path.isfile(self.__certfile_path)):
+            sys.exit("Cannot find server certificate/key")
 
     # Creates the file
     def __append_file(self, filename, contents):

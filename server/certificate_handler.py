@@ -53,7 +53,7 @@ class CertificateHandler:
         self.__verify_certs()
 
     def __add_trust(self, subject, trustedBy, pubkey):
-        print subject, "trusted by", trustedBy
+        #print subject, "trusted by", trustedBy
 
         if subject in self.__trust_list:
             self.__trust_list[subject].append(trustedBy)
