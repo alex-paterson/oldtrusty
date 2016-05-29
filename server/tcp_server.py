@@ -35,7 +35,7 @@ class TCPServer:
 
     def serve_forever(self):
         self.__attempt_to_bind()
-        self.s.listen(1)
+        self.s.listen(2)
         print("$ Listening on {}:{}\n".format(self.__host, self.__port))
         self.__enter_loop()
 
