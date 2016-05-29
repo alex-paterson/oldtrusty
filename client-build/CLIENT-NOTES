@@ -1,0 +1,8 @@
+Client private key must be in DER format. Must be named client.der
+To convert PEM to DER:
+
+openssl pkcs8 -topk8 -inform PEM -outform DER -in rsaprivkey.pem -out rsaprivkey.der -nocrypt
+
+To compile:
+javac -cp ".:argparse4j-0.7.0.jar" *.java
+
