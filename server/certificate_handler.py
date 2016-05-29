@@ -1,5 +1,7 @@
 import os
 from OpenSSL import crypto
+from OpenSSL.crypto import X509, X509Store
+
 
 from .exceptions import *
 
@@ -7,7 +9,9 @@ class CertificateHandler:
     def __init__(self, certificate_path):
         self.__certificate_path = certificate_path
         self.__trust_list = {}
+        self.__cert_store = X509Store()
         self.__load_certificates()
+        self.__verify_certs()
 
     def __load_certificates(self):
         for f in os.listdir(self.__certificate_path):
@@ -16,17 +20,37 @@ class CertificateHandler:
                 c = cf.read()
                 try:
                     cert = crypto.load_certificate(crypto.FILETYPE_PEM, c)
+
+                    self.__cert_store.add_cert(cert)
+
                     subject = self.__ID(cert.get_subject())
                     issuer = self.__ID(cert.get_issuer())
                     pubkey = cert.get_pubkey()
 
                     self.__add_trust(subject, issuer, pubkey)
-                except:
-                    print "Found invalid cetificate", repr(f)
+                except Exception as e:
+                    print "Found invalid cetificate", repr(f), e
+
+    def __verify_certs(self):
+        for f in os.listdir(self.__certificate_path):
+            filename = os.path.join(self.__certificate_path, f)
+            with open(filename, 'rt') as cf:
+                c = cf.read()
+                try:
+                    cert = crypto.load_certificate(crypto.FILETYPE_PEM, c)
+                    store_ctx = crypto.X509StoreContext(self.__cert_store, cert)
+                    result = store_ctx.verify_certificate()
+
+                    if result != None:
+                        print result
+                except Exception as e:
+                    print "Could not validate certificate", repr(f), e
 
     def reload_certificates(self):
         self.__trust_list = {}
+        self.__cert_store = X509Store()
         self.__load_certificates()
+        self.__verify_certs()
 
     def __add_trust(self, subject, trustedBy, pubkey):
         print subject, "trusted by", trustedBy
