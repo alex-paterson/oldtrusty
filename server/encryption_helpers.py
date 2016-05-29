@@ -12,7 +12,8 @@ def check_solution(message, original_number, rsa_key):
     decrypt = rsa_key.public_decrypt(message, RSA.pkcs1_padding)
 
     #This is needed to allow use with both python/java client:
-    if(len(decrypt) < 4):
+    print len(decrypt)
+    if(len(decrypt) != 4):
         solution = int(decrypt)
     else:
         solution = ascii_to_length(decrypt)
