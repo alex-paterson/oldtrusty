@@ -1,2 +1,4 @@
 pyopenssl (newest version)
 m2crypto
+cryptography
+libffi-dev
