@@ -8,8 +8,7 @@ Server certificate must be in Java trust store, in the same directory as oldTrus
 
 Notes:
 	To specify host use '--host' argument, '-h' is reservered for help.
-
-
+	argparse4j library is used for argument parsing
 
 
 
