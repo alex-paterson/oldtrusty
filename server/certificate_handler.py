@@ -7,7 +7,6 @@ class CertificateHandler:
     def __init__(self, certificate_path):
         self.__certificate_path = certificate_path
         self.__trust_list = {}
-        self.__pubkey_list = {}
         self.__load_certificates()
 
     def __load_certificates(self):
@@ -15,13 +14,15 @@ class CertificateHandler:
             filename = os.path.join(self.__certificate_path, f)
             with open(filename, 'rt') as cf:
                 c = cf.read()
-                cert = crypto.load_certificate(crypto.FILETYPE_PEM, c)
+                try:
+                    cert = crypto.load_certificate(crypto.FILETYPE_PEM, c)
+                    subject = self.__ID(cert.get_subject())
+                    issuer = self.__ID(cert.get_issuer())
+                    pubkey = cert.get_pubkey()
 
-                subject = self.__ID(cert.get_subject())
-                issuer = self.__ID(cert.get_issuer())
-                pubkey = cert.get_pubkey()
-
-                self.__add_trust(subject, issuer, pubkey)
+                    self.__add_trust(subject, issuer, pubkey)
+                except:
+                    print "Found invalid cetificate", repr(f)
 
     def reload_certificates(self):
         self.__trust_list = {}
