@@ -415,77 +415,50 @@ public class TCPClient {
     {
         byte[] data = Arrays.copyOf(stripHeader(response), 172);
         byte[] decoded = Base64.getDecoder().decode(data);
-        byte[] realData = decryptData(decoded);
-        System.out.printf("%s\n", new String(realData, java.nio.charset.StandardCharsets.UTF_8));
+        byte[] realData = doDataEncryption(decoded, false);
         
         int number = Integer.parseInt(new String(realData));
         number = number + 499;
-        System.out.printf("%d\n", number);
         
         byte[] num = ByteBuffer.allocate(4).putInt(number).array();
-        byte[] encoded = encryptData(num);
+        byte[] encoded = doDataEncryption(num, true);
         realData = Base64.getEncoder().encode(encoded);
         
         sendPacket(Packet.PUBKEY_RESPONSE, realData);
     }
     
-    private byte[] encryptData(byte[] data) throws IOException, ClassNotFoundException, NoSuchAlgorithmException, InvalidKeySpecException
+    private byte[] doDataEncryption(byte[] data, boolean ifEncrypt) throws IOException, ClassNotFoundException, NoSuchAlgorithmException, InvalidKeySpecException
     {
         Cipher cipher = null;
         try {
             cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-        } catch (NoSuchAlgorithmException ex) {
-            Logger.getLogger(TCPClient.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (NoSuchPaddingException ex) {
-            Logger.getLogger(TCPClient.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException ex) {
+            System.out.printf("Error in encryption: %s\n", ex.getLocalizedMessage());
+            return new byte[2];
         }
         PrivateKey privKey = loadPrivateKey();
         try {
-            cipher.init(Cipher.ENCRYPT_MODE, privKey);
+            cipher.init(ifEncrypt ? Cipher.ENCRYPT_MODE : Cipher.DECRYPT_MODE, privKey);
         } catch (InvalidKeyException ex) {
             Logger.getLogger(TCPClient.class.getName()).log(Level.SEVERE, null, ex);
         }
         
         try {
             return cipher.doFinal(data);
-        } catch (IllegalBlockSizeException ex) {
-            Logger.getLogger(TCPClient.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (BadPaddingException ex) {
-            Logger.getLogger(TCPClient.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return new byte[2];
-    }
-    
-    private byte[] decryptData(byte[] data) throws IOException, ClassNotFoundException, NoSuchAlgorithmException, InvalidKeySpecException
-    {
-        Cipher cipher = null;
-        try {
-            cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-        } catch (NoSuchAlgorithmException ex) {
-            Logger.getLogger(TCPClient.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (NoSuchPaddingException ex) {
-            Logger.getLogger(TCPClient.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        PrivateKey privKey = loadPrivateKey();
-        try {
-            cipher.init(Cipher.DECRYPT_MODE, privKey);
-        } catch (InvalidKeyException ex) {
-            Logger.getLogger(TCPClient.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        
-        try {
-            return cipher.doFinal(data);
-        } catch (IllegalBlockSizeException ex) {
-            Logger.getLogger(TCPClient.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (BadPaddingException ex) {
-            Logger.getLogger(TCPClient.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IllegalBlockSizeException | BadPaddingException ex) {
+            System.out.printf("Error in encryption: %s\n", ex.getLocalizedMessage());
         }
         return new byte[2];
     }
     
     private PrivateKey loadPrivateKey() throws IOException, ClassNotFoundException, NoSuchAlgorithmException, InvalidKeySpecException
     {
-        File f = new File("/home/nick/uwa/alex/oldtrusty/priv.der");
+        File f = new File("client.der");
+        if(!f.exists())
+        {
+            System.out.printf("Cannot find client private key\n");
+        }
+        
         FileInputStream fis = new FileInputStream(f);
         DataInputStream dis = new DataInputStream(fis);
         byte[] keyBytes = new byte[(int) f.length()];
